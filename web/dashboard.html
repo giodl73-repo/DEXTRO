@@ -270,6 +270,17 @@
             }
         }
 
+        .map-container.metros-layout {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 1200px) {
+            .map-container.metros-layout {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
         .map-item {
             background: #f8f9fa;
             border-radius: 8px;
@@ -629,13 +640,15 @@
                         html = generateUSARounds();
                         break;
                     case 'districts':
-                    case 'urban':
                         html = `
                             <div class="content-card">
-                                <h2>United States - ${currentDimension.charAt(0).toUpperCase() + currentDimension.slice(1)}</h2>
-                                <p>This view is specific to individual states. Select a state from the sidebar to view ${currentDimension} data.</p>
+                                <h2>United States - Districts</h2>
+                                <p>This view is specific to individual states. Select a state from the sidebar to view districts data.</p>
                             </div>
                         `;
+                        break;
+                    case 'urban':
+                        html = generateUSAMetros();
                         break;
                 }
                 contentArea.innerHTML = html;
@@ -940,22 +953,76 @@
         // Generate urban areas content
         function generateUrban(stateName, state, districts) {
             const basePath = getBasePath();
+
+            // Define metros for each state
+            const stateMetros = {
+                'new_york': [{file: 'new_york', display: 'New York-Newark-Jersey City'}],
+                'california': [
+                    {file: 'los_angeles', display: 'Los Angeles'},
+                    {file: 'san_francisco', display: 'San Francisco Bay Area'},
+                    {file: 'riverside', display: 'Riverside-San Bernardino'},
+                    {file: 'san_diego', display: 'San Diego'}
+                ],
+                'illinois': [{file: 'chicago', display: 'Chicago'}],
+                'texas': [
+                    {file: 'dallas', display: 'Dallas-Fort Worth'},
+                    {file: 'houston', display: 'Houston'}
+                ],
+                'virginia': [{file: 'washington', display: 'Washington DC Metro'}],
+                'pennsylvania': [{file: 'philadelphia', display: 'Philadelphia'}],
+                'florida': [
+                    {file: 'miami', display: 'Miami-Fort Lauderdale'},
+                    {file: 'tampa', display: 'Tampa-St. Petersburg'}
+                ],
+                'georgia': [{file: 'atlanta', display: 'Atlanta'}],
+                'massachusetts': [{file: 'boston', display: 'Boston-Cambridge'}],
+                'arizona': [{file: 'phoenix', display: 'Phoenix'}],
+                'michigan': [{file: 'detroit', display: 'Detroit'}],
+                'washington': [{file: 'seattle', display: 'Seattle-Tacoma'}],
+                'minnesota': [{file: 'minneapolis', display: 'Minneapolis-St. Paul'}],
+                'colorado': [{file: 'denver', display: 'Denver'}],
+                'missouri': [{file: 'st_louis', display: 'St. Louis'}]
+            };
+
+            const metros = stateMetros[state] || [];
+
+            // Check if state has metros
+            if (metros.length === 0) {
+                return `
+                    <div class="content-card">
+                        <h2>${stateName} - Urban Areas</h2>
+                        <p>No major metropolitan areas in top 20 MSAs for this state.</p>
+
+                        <h3>Major Cities</h3>
+                        <p><a href="${basePath}/states/${state}/district_cities.csv" target="_blank">📊 Download District Cities CSV</a></p>
+                    </div>
+                `;
+            }
+
+            // Generate metro maps HTML
+            let mapsHtml = '';
+            metros.forEach(metro => {
+                mapsHtml += `
+                    <div class="map-item">
+                        <img src="${basePath}/states/${state}/maps/metros/${metro.file}.png"
+                             alt="${metro.display}"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%23999%22%3E${metro.display}%3C/text%3E%3C/svg%3E'">
+                        <div class="map-label">${metro.display}</div>
+                    </div>
+                `;
+            });
+
             return `
                 <div class="content-card">
-                    <h2>${stateName} - Urban Areas</h2>
-                    <p>Districts overlaid on major metropolitan statistical areas (MSAs).</p>
+                    <h2>${stateName} - Metropolitan Areas</h2>
+                    <p>Focused district maps showing how congressional districts are configured within major metropolitan areas.</p>
 
-                    <div class="map-container">
-                        <div class="map-item">
-                            <img src="${basePath}/states/${state}/urban/urban_districts_map.png"
-                                 alt="Urban Districts"
-                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%23999%22%3EUrban Analysis Not Yet Available%3C/text%3E%3C/svg%3E'">
-                            <div class="map-label">Urban Districts</div>
-                        </div>
+                    <div class="map-container metros-layout">
+                        ${mapsHtml}
                     </div>
 
                     <h3>Major Cities</h3>
-                    <p><a href="${basePath}/states/${state}/district_cities.csv" target="_blank">📊 Download CSV</a></p>
+                    <p><a href="${basePath}/states/${state}/district_cities.csv" target="_blank">📊 Download District Cities CSV</a></p>
                 </div>
             `;
         }
@@ -1144,6 +1211,65 @@
 
                     <h3>National Round Hierarchy</h3>
                     <p><a href="${basePath}/us_rounds_hierarchy.csv" target="_blank">📊 Download CSV</a> - Complete hierarchy showing all regions across all states and rounds</p>
+                </div>
+            `;
+        }
+
+        // Generate USA metros content
+        function generateUSAMetros() {
+            const basePath = getBasePath();
+
+            // Define metro map data (state code, display name)
+            const metrosData = [
+                {state: 'new_york', name: 'New York-Newark-Jersey City', file: 'new_york'},
+                {state: 'california', name: 'Los Angeles', file: 'los_angeles'},
+                {state: 'california', name: 'San Francisco Bay Area', file: 'san_francisco'},
+                {state: 'california', name: 'Riverside-San Bernardino', file: 'riverside'},
+                {state: 'california', name: 'San Diego', file: 'san_diego'},
+                {state: 'illinois', name: 'Chicago', file: 'chicago'},
+                {state: 'texas', name: 'Dallas-Fort Worth', file: 'dallas'},
+                {state: 'texas', name: 'Houston', file: 'houston'},
+                {state: 'virginia', name: 'Washington DC Metro', file: 'washington'},
+                {state: 'pennsylvania', name: 'Philadelphia', file: 'philadelphia'},
+                {state: 'florida', name: 'Miami-Fort Lauderdale', file: 'miami'},
+                {state: 'florida', name: 'Tampa-St. Petersburg', file: 'tampa'},
+                {state: 'georgia', name: 'Atlanta', file: 'atlanta'},
+                {state: 'massachusetts', name: 'Boston-Cambridge', file: 'boston'},
+                {state: 'arizona', name: 'Phoenix', file: 'phoenix'},
+                {state: 'michigan', name: 'Detroit', file: 'detroit'},
+                {state: 'washington', name: 'Seattle-Tacoma', file: 'seattle'},
+                {state: 'minnesota', name: 'Minneapolis-St. Paul', file: 'minneapolis'},
+                {state: 'colorado', name: 'Denver', file: 'denver'},
+                {state: 'missouri', name: 'St. Louis', file: 'st_louis'}
+            ];
+
+            // Generate HTML for all metros (3 per row)
+            let mapsHtml = '';
+            metrosData.forEach(metro => {
+                mapsHtml += `
+                    <div class="map-item">
+                        <img src="${basePath}/states/${metro.state}/maps/metros/${metro.file}.png"
+                             alt="${metro.name}"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%23999%22%3E${metro.name}%3C/text%3E%3C/svg%3E'">
+                        <div class="map-label">${metro.name}</div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="content-card">
+                    <h2>United States - Major Metropolitan Areas</h2>
+                    <p>Focused district maps for the top 20 Metropolitan Statistical Areas (MSAs) showing how congressional districts are configured within major urban centers.</p>
+
+                    <div class="map-container metros-layout">
+                        ${mapsHtml}
+                    </div>
+
+                    <h3>About Metropolitan Statistical Areas (MSAs)</h3>
+                    <p>MSAs are defined by the U.S. Census Bureau as geographic regions with high population density and economic integration. These maps show how congressional districts intersect with major urban areas, providing insight into urban representation.</p>
+
+                    <h3>Coverage</h3>
+                    <p>The maps cover the 20 largest MSAs by population, spanning 16 states and encompassing over 170 million people.</p>
                 </div>
             `;
         }
