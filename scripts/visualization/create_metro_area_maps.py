@@ -310,7 +310,7 @@ def main():
         print(f"{'='*80}")
         print(f"Year: {args.year}")
         print(f"Version: {args.version}")
-        print(f"Output: {output_dir}/states/*/maps/metro_*.png")
+        print(f"Output: {output_dir}/states/*/maps/metros/*.png")
         print(f"DPI: {args.dpi}")
         print(f"{'='*80}\n")
 
@@ -356,7 +356,7 @@ def main():
 
     for state_code, metros_list in TOP_METROS.items():
         state_name = STATE_CONFIG[state_code]['name']
-        state_dir = output_dir / 'states' / state_name.lower().replace(' ', '_') / 'maps'
+        state_dir = output_dir / 'states' / state_name.lower().replace(' ', '_') / 'maps' / 'metros'
 
         print(f"\nProcessing {state_code} ({state_name}): {len(metros_list)} metro(s)")
 
@@ -382,7 +382,7 @@ def main():
             metro_geometry = metro_row.geometry
 
             # Create output filename
-            output_file = state_dir / f"metro_{short_name}.png"
+            output_file = state_dir / f"{short_name}.png"
 
             try:
                 success = create_metro_map(
@@ -415,7 +415,7 @@ def main():
         print(f"Total Metros: {total_metros}")
         print(f"Successful: {successful}")
         print(f"Failed: {failed}")
-        print(f"Output: {output_dir}/states/*/maps/metro_*.png")
+        print(f"Output: {output_dir}/states/*/maps/metros/*.png")
         print(f"{'='*80}\n")
 
     return 0 if failed == 0 else 1
