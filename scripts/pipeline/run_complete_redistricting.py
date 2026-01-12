@@ -795,6 +795,16 @@ def main():
             'critical': False
         })
 
+    # Create metro area maps for major MSAs
+    if output_dir.exists() or args.print_only:
+        metro_viz_script = Path('scripts/visualization/create_metro_area_maps.py')
+        if metro_viz_script.exists():
+            pipeline_steps.append({
+                'name': 'Create metro area district maps',
+                'command': f'{sys.executable} {metro_viz_script} --year {args.year} --version {args.version} --output-dir {output_dir} --dpi {args.dpi}'.strip(),
+                'critical': False
+            })
+
     # Generate static dashboard with all district data
     if output_dir.exists() or args.print_only:
         dashboard_script = Path('scripts/web/generate_dashboard.py')
