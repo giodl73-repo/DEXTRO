@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patheffects as path_effects
 import json
+import os
 from pathlib import Path
 import argparse
 import sys
@@ -301,20 +302,39 @@ def main():
     else:
         state_config = STATE_CONFIG_2010
 
-    print(f"\n{'='*80}")
-    print(f"Creating National Round Progression Maps")
-    print(f"{'='*80}")
-    print(f"Year: {args.year}")
-    print(f"Version: {args.version}")
-    print(f"Output: {output_dir}")
-    print(f"DPI: {args.dpi}")
-    print(f"Max rounds: {args.max_rounds}\n")
+    # Check if called from parent (progress reporting protocol)
+    position = int(os.environ.get('TQDM_POSITION', '-1'))
+    send_status = position >= 0
+    is_standalone = not send_status
+
+    def report_progress(msg):
+        """Send progress to parent process."""
+        if send_status:
+            print(f"STATUS:{position}:{msg}", flush=True)
+
+    # Only show banners if standalone
+    if is_standalone:
+        print(f"\n{'='*80}")
+        print(f"Creating National Round Progression Maps")
+        print(f"{'='*80}")
+        print(f"Year: {args.year}")
+        print(f"Version: {args.version}")
+        print(f"Output: {output_dir}")
+        print(f"DPI: {args.dpi}")
+        print(f"Max rounds: {args.max_rounds}\n")
 
     # Check which rounds are available across all states
     available_rounds = {}
 
-    print("Scanning states for round data...")
-    for state_code, config in tqdm(state_config.items(), desc="Scanning states"):
+    report_progress("Scanning states for round data...")
+
+    # Progress bar for scanning (disabled if called from parent)
+    scan_iter = tqdm(state_config.items(),
+                     desc="Scanning states",
+                     disable=send_status,
+                     leave=False)
+
+    for state_code, config in scan_iter:
         state_name = config['name']
         state_dir = output_dir / 'states' / state_name.lower().replace(' ', '_')
 
@@ -338,26 +358,34 @@ def main():
                 available_rounds[round_num].append((state_code, state_name, state_dir))
 
     if not available_rounds:
-        print("No round data found!")
+        if is_standalone:
+            print("No round data found!")
         return 1
 
     # Generate maps for each round
-    print(f"\nFound {len(available_rounds)} rounds: {sorted(available_rounds.keys())}")
-    print(f"\nGenerating national maps...")
+    rounds_to_generate = [r for r in sorted(available_rounds.keys()) if r <= args.max_rounds]
 
-    for round_num in sorted(available_rounds.keys()):
-        if round_num > args.max_rounds:
-            continue
+    if is_standalone:
+        print(f"\nFound {len(available_rounds)} rounds: {sorted(available_rounds.keys())}")
+        print(f"\nGenerating {len(rounds_to_generate)} national maps...")
 
+    for idx, round_num in enumerate(rounds_to_generate, 1):
         states_in_round = available_rounds[round_num]
-        print(f"\nRound {round_num}: {len(states_in_round)} states")
+
+        report_progress(f"Creating round {round_num} map ({idx}/{len(rounds_to_generate)})")
+
+        if is_standalone:
+            print(f"\nRound {round_num}: {len(states_in_round)} states")
 
         # Load data for all states in this round
         all_states_data = []
 
-        for state_code, state_name, state_dir in tqdm(states_in_round,
-                                                       desc=f"  Loading round {round_num}",
-                                                       leave=False):
+        load_iter = tqdm(states_in_round,
+                        desc=f"  Loading round {round_num}",
+                        disable=send_status,
+                        leave=False)
+
+        for state_code, state_name, state_dir in load_iter:
             tracts_file = f'data/raw/{state_code.lower()}_tracts_{args.year}.parquet'
 
             data = load_state_round_data(state_dir, round_num, tracts_file,
@@ -369,18 +397,22 @@ def main():
         # Create national map
         output_file = output_dir / f'us_national_round_{round_num}_{args.year}.png'
 
+        report_progress(f"Rendering round {round_num} map ({idx}/{len(rounds_to_generate)})")
+
         success = create_national_round_map(round_num, all_states_data,
                                            output_file, dpi=args.dpi)
 
-        if success:
-            print(f"  ✓ Created: {output_file.name}")
-        else:
-            print(f"  ✗ Failed: round {round_num}")
+        if is_standalone:
+            if success:
+                print(f"  ✓ Created: {output_file.name}")
+            else:
+                print(f"  ✗ Failed: round {round_num}")
 
-    print(f"\n{'='*80}")
-    print(f"National round progression maps complete!")
-    print(f"Output directory: {output_dir}")
-    print(f"{'='*80}\n")
+    if is_standalone:
+        print(f"\n{'='*80}")
+        print(f"National round progression maps complete!")
+        print(f"Output directory: {output_dir}")
+        print(f"{'='*80}\n")
 
     return 0
 
