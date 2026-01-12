@@ -43,13 +43,40 @@ def load_state_round_data(state_dir, round_num, tracts_file, state_code, state_n
     If the requested round doesn't exist (state completed earlier),
     loads the last available round to keep completed districts visible.
 
+    For single-district states with no intermediate rounds, loads final assignments.
+
     Returns None if no round data exists for this state.
     """
     # Look for round metadata file
     intermediate_dir = state_dir / 'intermediate'
 
+    # Handle single-district states (no intermediate directory)
     if not intermediate_dir.exists():
-        return None
+        # Load final assignments directly
+        assignments_file = state_dir / 'final_assignments.pkl'
+        if not assignments_file.exists():
+            return None
+
+        if not Path(tracts_file).exists():
+            return None
+
+        tracts = gpd.read_parquet(tracts_file)
+
+        with open(assignments_file, 'rb') as f:
+            assignments = pickle.load(f)
+
+        # Assign all tracts to district 1
+        tracts['region'] = [assignments[i] for i in range(len(tracts))]
+        tracts['state_code'] = state_code
+        tracts['state_name'] = state_name
+        tracts['unique_region_id'] = tracts['state_code'] + '_0'  # Single region
+
+        return {
+            'tracts': tracts,
+            'num_regions': 1,
+            'total_population': int(tracts['population'].sum()) if 'population' in tracts.columns else 0,
+            'region_targets': {f"{state_code}_0": 1}
+        }
 
     # Find all round files
     round_files = sorted(intermediate_dir.glob('round_*_metadata.json'))
