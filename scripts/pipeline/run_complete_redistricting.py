@@ -771,27 +771,14 @@ def main():
             'critical': False
         })
 
-    # Run compactness visualization on all states
+    # Run compactness visualization
+    # Note: If --run-analysis is enabled, per-state visualizations already ran during state processing
+    # This step creates the national aggregation map
     if output_dir.exists() or args.print_only:
-        compactness_scripts = scripts_dir.parent / 'compactness'
-        compactness_viz_script = compactness_scripts / 'run_compactness_visualization.py'
-
-        if compactness_viz_script.exists():
-            # Get list of state directories
-            states_dir = output_dir / 'states'
-            if states_dir.exists() or args.print_only:
-                # Add step to run compactness visualization on all states
-                pipeline_steps.append({
-                    'name': 'Compactness visualization (all states)',
-                    'command': f'{sys.executable} {compactness_scripts}/run_compactness_visualization.py --census-year {args.year} --version {args.version} --dpi {args.dpi}'.strip(),
-                    'critical': False
-                })
-
-    # Create national compactness map (after compactness visualization completes)
-    if output_dir.exists() or args.print_only:
+        compactness_script = scripts_dir.parent / 'compactness' / 'visualize_compactness.py'
         pipeline_steps.append({
             'name': 'Create national compactness map',
-            'command': f'{sys.executable} scripts/compactness/create_us_national_compactness_map.py --year {args.year} --version {args.version} --output-dir {output_dir} --dpi {args.dpi}'.strip(),
+            'command': f'{sys.executable} {compactness_script} --scope national --output-dir {output_dir} --version {args.version} --census-year {args.year} --dpi {args.dpi}'.strip(),
             'critical': False
         })
 
