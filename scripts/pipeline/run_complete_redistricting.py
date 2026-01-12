@@ -682,6 +682,15 @@ def main():
             'critical': False
         })
 
+    # Create national round progression maps
+    national_rounds_script = scripts_dir / 'create_us_national_rounds_progression.py'
+    if national_rounds_script.exists() and (output_dir.exists() or args.print_only):
+        pipeline_steps.append({
+            'name': 'Create national round progression maps',
+            'command': f'{sys.executable} {national_rounds_script} --year {args.year} --version {args.version} --output-dir {output_dir} --dpi {args.dpi} --max-rounds 6'.strip(),
+            'critical': False
+        })
+
     # Create US national maps
     national_map_script = scripts_dir / 'create_us_national_map.py'
     if national_map_script.exists():

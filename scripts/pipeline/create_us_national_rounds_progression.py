@@ -1,0 +1,332 @@
+#!/usr/bin/env python3
+"""
+Create national-level maps showing recursive bisection progression across all states.
+
+Uses the 3-panel layout (Continental US + Alaska + Hawaii insets) to visualize
+how districts are progressively created through recursive bisection:
+- Round 1: 2 regions
+- Round 2: 4 regions
+- Round 3: 8 regions
+- Round 4: 16 regions
+- Round 5: 32 regions
+- Round 6: 64 regions
+- Continue through later rounds as states complete divisions
+"""
+
+import warnings
+warnings.filterwarnings('ignore')
+
+import geopandas as gpd
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.patheffects as path_effects
+import json
+from pathlib import Path
+import argparse
+import sys
+import numpy as np
+from tqdm import tqdm
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from scripts.config_2020 import STATE_CONFIG_2020
+from scripts.config_2010 import STATE_CONFIG_2010
+
+
+def load_state_round_data(state_dir, round_num, tracts_file, state_code, state_name):
+    """
+    Load round data for a single state.
+
+    Returns None if round doesn't exist for this state.
+    """
+    # Look for round metadata file
+    intermediate_dir = state_dir / 'intermediate'
+
+    if not intermediate_dir.exists():
+        return None
+
+    # Find all round files
+    round_files = sorted(intermediate_dir.glob('round_*_metadata.json'))
+
+    # Find the specific round we want
+    target_file = None
+    for f in round_files:
+        with open(f, 'r') as fp:
+            metadata = json.load(fp)
+            if metadata['depth'] == round_num:
+                target_file = f
+                break
+
+    if not target_file:
+        return None
+
+    # Load metadata
+    with open(target_file, 'r') as f:
+        metadata = json.load(f)
+
+    # Load assignments
+    assignments_file = target_file.parent / target_file.name.replace('_metadata.json', '_assignments.json')
+    if not assignments_file.exists():
+        return None
+
+    with open(assignments_file, 'r') as f:
+        assignments_dict = json.load(f)
+
+    # Load tracts
+    if not Path(tracts_file).exists():
+        return None
+
+    tracts = gpd.read_parquet(tracts_file)
+
+    # Convert assignments to array
+    try:
+        assignments = np.array([assignments_dict[str(i)] for i in range(len(tracts))], dtype=np.int32)
+    except KeyError:
+        return None  # Incomplete round
+
+    # Add region assignments
+    tracts['region'] = assignments
+    tracts['state_code'] = state_code
+    tracts['state_name'] = state_name
+
+    # Create unique region IDs across states (state_code + region number)
+    tracts['unique_region_id'] = tracts['state_code'] + '_' + tracts['region'].astype(str)
+
+    return {
+        'tracts': tracts,
+        'num_regions': metadata['num_regions'],
+        'total_population': metadata.get('total_population', 0)
+    }
+
+
+def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
+    """
+    Create national map for a specific round showing regions across all states.
+
+    Uses 3-panel layout: Continental US (large) + Alaska inset + Hawaii inset
+    """
+    if not all_states_data:
+        print(f"No data for round {round_num}")
+        return False
+
+    # Combine all state tracts
+    all_tracts_list = [data['tracts'] for data in all_states_data]
+    us_tracts = pd.concat(all_tracts_list, ignore_index=True)
+
+    # Calculate total regions
+    total_regions = us_tracts['unique_region_id'].nunique()
+
+    # Separate continental US, Alaska, and Hawaii
+    continental = us_tracts[~us_tracts['state_code'].isin(['AK', 'HI'])].copy()
+    alaska = us_tracts[us_tracts['state_code'] == 'AK'].copy()
+    hawaii = us_tracts[us_tracts['state_code'] == 'HI'].copy()
+
+    # Create figure with 3 panels (same layout as create_us_national_map.py)
+    fig = plt.figure(figsize=(28, 18))
+
+    # Main continental US (takes most of the space)
+    ax_main = plt.subplot2grid((4, 4), (0, 0), colspan=4, rowspan=3)
+
+    # Alaska inset (bottom left)
+    ax_alaska = plt.subplot2grid((4, 4), (3, 0), colspan=1, rowspan=1)
+
+    # Hawaii inset (bottom left-center)
+    ax_hawaii = plt.subplot2grid((4, 4), (3, 1), colspan=1, rowspan=1)
+
+    # Use extended color palette
+    colors = list(cm.tab20.colors) + list(cm.tab20b.colors) + list(cm.tab20c.colors)
+
+    def plot_region(tracts_data, ax, region_name):
+        """Plot a region with colored tracts and boundaries."""
+        if len(tracts_data) == 0:
+            ax.set_axis_off()
+            return
+
+        # Get unique regions in this subset
+        unique_regions = tracts_data['unique_region_id'].unique()
+
+        # Create a color mapping for these regions
+        region_to_color = {}
+        for i, region_id in enumerate(sorted(unique_regions)):
+            region_to_color[region_id] = colors[i % len(colors)]
+
+        # Plot tracts with thin white boundaries
+        for region_id in unique_regions:
+            region_data = tracts_data[tracts_data['unique_region_id'] == region_id]
+            region_data.plot(
+                ax=ax,
+                color=region_to_color[region_id],
+                edgecolor='white',
+                linewidth=0.05,
+                alpha=0.8
+            )
+
+        # Add thick black boundaries around regions
+        regions_dissolved = tracts_data.dissolve(by='unique_region_id', as_index=False)
+        regions_dissolved.boundary.plot(
+            ax=ax,
+            edgecolor='black',
+            linewidth=1.0,
+            zorder=10
+        )
+
+        # Add state boundaries (lighter gray, dashed)
+        states_dissolved = tracts_data.dissolve(by='state_code', as_index=False)
+        states_dissolved.boundary.plot(
+            ax=ax,
+            edgecolor='darkgray',
+            linewidth=0.5,
+            linestyle='--',
+            zorder=9,
+            alpha=0.7
+        )
+
+        ax.set_axis_off()
+
+    # Plot each region
+    plot_region(continental, ax_main, "Continental US")
+    plot_region(alaska, ax_alaska, "Alaska")
+    plot_region(hawaii, ax_hawaii, "Hawaii")
+
+    # Add title
+    expected_regions = 2 ** round_num
+    title = f'U.S. Congressional Districts - Round {round_num}\n'
+    title += f'{total_regions} regions nationwide (target: {expected_regions} from 2^{round_num} bisections)'
+
+    fig.suptitle(title, fontsize=20, fontweight='bold', y=0.98)
+
+    # Add stats text box (same style as create_us_national_map.py)
+    total_pop = sum(data['total_population'] for data in all_states_data)
+    textstr = f'Round: {round_num}\n'
+    textstr += f'Regions: {total_regions}\n'
+    textstr += f'Total Population: {total_pop:,}\n'
+    textstr += f'Avg per region: {total_pop//total_regions:,}'
+
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.9)
+    ax_main.text(0.02, 0.98, textstr, transform=ax_main.transAxes, fontsize=12,
+                verticalalignment='top', bbox=props, zorder=15)
+
+    plt.tight_layout()
+
+    # Save
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_file, dpi=dpi, bbox_inches='tight')
+    plt.close(fig)
+
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Create national round progression maps')
+    parser.add_argument('--year', type=str, default='2020', choices=['2020', '2010'],
+                       help='Census year (default: 2020)')
+    parser.add_argument('--version', type=str, default='v1',
+                       help='Version identifier (default: v1)')
+    parser.add_argument('--output-dir', type=str, default=None,
+                       help='Output directory (default: outputs/us_YEAR_VERSION)')
+    parser.add_argument('--dpi', type=int, default=150,
+                       help='DPI for output maps (default: 150)')
+    parser.add_argument('--max-rounds', type=int, default=10,
+                       help='Maximum rounds to generate (default: 10)')
+    args = parser.parse_args()
+
+    # Determine output directory
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+    else:
+        output_dir = Path(f'outputs/us_{args.year}_{args.version}')
+
+    # Get state config
+    if args.year == '2020':
+        state_config = STATE_CONFIG_2020
+    else:
+        state_config = STATE_CONFIG_2010
+
+    print(f"\n{'='*80}")
+    print(f"Creating National Round Progression Maps")
+    print(f"{'='*80}")
+    print(f"Year: {args.year}")
+    print(f"Version: {args.version}")
+    print(f"Output: {output_dir}")
+    print(f"DPI: {args.dpi}")
+    print(f"Max rounds: {args.max_rounds}\n")
+
+    # Check which rounds are available across all states
+    available_rounds = {}
+
+    print("Scanning states for round data...")
+    for state_code, config in tqdm(state_config.items(), desc="Scanning states"):
+        state_name = config['name']
+        state_dir = output_dir / 'states' / state_name.lower().replace(' ', '_')
+
+        if not state_dir.exists():
+            continue
+
+        intermediate_dir = state_dir / 'intermediate'
+        if not intermediate_dir.exists():
+            continue
+
+        # Find all rounds for this state
+        round_files = sorted(intermediate_dir.glob('round_*_metadata.json'))
+        for f in round_files:
+            with open(f, 'r') as fp:
+                metadata = json.load(fp)
+                round_num = metadata['depth']
+
+                if round_num not in available_rounds:
+                    available_rounds[round_num] = []
+
+                available_rounds[round_num].append((state_code, state_name, state_dir))
+
+    if not available_rounds:
+        print("No round data found!")
+        return 1
+
+    # Generate maps for each round
+    print(f"\nFound {len(available_rounds)} rounds: {sorted(available_rounds.keys())}")
+    print(f"\nGenerating national maps...")
+
+    for round_num in sorted(available_rounds.keys()):
+        if round_num > args.max_rounds:
+            continue
+
+        states_in_round = available_rounds[round_num]
+        print(f"\nRound {round_num}: {len(states_in_round)} states")
+
+        # Load data for all states in this round
+        all_states_data = []
+
+        for state_code, state_name, state_dir in tqdm(states_in_round,
+                                                       desc=f"  Loading round {round_num}",
+                                                       leave=False):
+            tracts_file = f'data/raw/{state_code.lower()}_tracts_{args.year}.parquet'
+
+            data = load_state_round_data(state_dir, round_num, tracts_file,
+                                        state_code, state_name)
+
+            if data:
+                all_states_data.append(data)
+
+        # Create national map
+        output_file = output_dir / f'us_national_round_{round_num}_{args.year}.png'
+
+        success = create_national_round_map(round_num, all_states_data,
+                                           output_file, dpi=args.dpi)
+
+        if success:
+            print(f"  ✓ Created: {output_file.name}")
+        else:
+            print(f"  ✗ Failed: round {round_num}")
+
+    print(f"\n{'='*80}")
+    print(f"National round progression maps complete!")
+    print(f"Output directory: {output_dir}")
+    print(f"{'='*80}\n")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -625,8 +625,10 @@
                     case 'compactness':
                         html = generateUSACompactness();
                         break;
-                    case 'districts':
                     case 'rounds':
+                        html = generateUSARounds();
+                        break;
+                    case 'districts':
                     case 'urban':
                         html = `
                             <div class="content-card">
@@ -1097,6 +1099,51 @@
 
                     <h3>State-by-State Cities</h3>
                     <p>For detailed city information by district, select individual states from the sidebar and navigate to the Cities tab.</p>
+                </div>
+            `;
+        }
+
+        // Generate USA rounds content
+        function generateUSARounds() {
+            const basePath = getBasePath();
+
+            // Generate round progression maps (rounds 1-6)
+            let mapsHtml = '';
+            for (let round = 1; round <= 6; round++) {
+                const expectedRegions = Math.pow(2, round);
+                mapsHtml += `
+                    <div class="map-item">
+                        <img src="${basePath}/us_national_round_${round}_${currentYear}.png"
+                             alt="Round ${round}: ${expectedRegions} regions nationwide"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 fill=%22%23999%22%3ERound ${round}%3C/text%3E%3C/svg%3E'">
+                        <div class="map-label">Round ${round}: ${expectedRegions} regions (2^${round})</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="content-card">
+                    <h2>United States - Recursive Bisection Progression</h2>
+                    <p>National-level visualization showing how all 435 congressional districts are progressively created through recursive bisection across all 50 states.</p>
+
+                    <div class="map-container rounds-layout">
+                        ${mapsHtml}
+                    </div>
+
+                    <h3>Understanding Round Progression</h3>
+                    <p><strong>Round 1:</strong> Each state is divided into 2 regions (left/right split)</p>
+                    <p><strong>Round 2:</strong> Each region is divided into 2 sub-regions (4 total per state)</p>
+                    <p><strong>Round 3:</strong> 8 regions per state</p>
+                    <p><strong>Round 4:</strong> 16 regions per state</p>
+                    <p><strong>Round 5:</strong> 32 regions per state</p>
+                    <p><strong>Round 6:</strong> 64 regions per state</p>
+                    <p>States with fewer districts complete earlier and show their final districts in subsequent rounds.</p>
+
+                    <h3>State-by-State Rounds</h3>
+                    <p>For detailed round-by-round progression showing how individual states are divided, select a state from the sidebar and navigate to the Rounds tab.</p>
+
+                    <h3>National Round Hierarchy</h3>
+                    <p><a href="${basePath}/us_rounds_hierarchy.csv" target="_blank">📊 Download CSV</a> - Complete hierarchy showing all regions across all states and rounds</p>
                 </div>
             `;
         }
