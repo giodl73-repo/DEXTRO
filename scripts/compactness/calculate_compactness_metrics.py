@@ -260,6 +260,12 @@ def calculate_metrics_for_state(state_dir):
         print(f"\nMerging with existing district_summary.csv...")
         summary_df = pd.read_csv(summary_file)
 
+        # Drop existing compactness columns if they exist (to avoid duplicates)
+        compactness_cols = ['polsby_popper', 'reock', 'convex_hull_ratio']
+        for col in compactness_cols:
+            if col in summary_df.columns:
+                summary_df = summary_df.drop(columns=[col])
+
         # Merge metrics into summary
         summary_df = summary_df.merge(metrics_df, on='district', how='left')
 

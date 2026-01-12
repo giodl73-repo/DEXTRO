@@ -40,7 +40,10 @@ def load_state_round_data(state_dir, round_num, tracts_file, state_code, state_n
     """
     Load round data for a single state.
 
-    Returns None if round doesn't exist for this state.
+    If the requested round doesn't exist (state completed earlier),
+    loads the last available round to keep completed districts visible.
+
+    Returns None if no round data exists for this state.
     """
     # Look for round metadata file
     intermediate_dir = state_dir / 'intermediate'
@@ -51,14 +54,25 @@ def load_state_round_data(state_dir, round_num, tracts_file, state_code, state_n
     # Find all round files
     round_files = sorted(intermediate_dir.glob('round_*_metadata.json'))
 
-    # Find the specific round we want
-    target_file = None
+    if not round_files:
+        return None
+
+    # Build a map of round depth to file
+    rounds_map = {}
     for f in round_files:
         with open(f, 'r') as fp:
             metadata = json.load(fp)
-            if metadata['depth'] == round_num:
-                target_file = f
-                break
+            rounds_map[metadata['depth']] = f
+
+    # Find the specific round we want, or the highest available round if it doesn't exist
+    target_file = None
+    if round_num in rounds_map:
+        target_file = rounds_map[round_num]
+    else:
+        # State completed earlier - use the last available round
+        available_rounds = sorted(rounds_map.keys())
+        if available_rounds and available_rounds[-1] < round_num:
+            target_file = rounds_map[available_rounds[-1]]
 
     if not target_file:
         return None

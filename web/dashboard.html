@@ -289,6 +289,14 @@
             max-width: 1400px;
         }
 
+        /* Full-width single map (for political, compactness, etc.) */
+        .map-container.full-width {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
         .map-item {
             background: #f8f9fa;
             border-radius: 8px;
@@ -880,7 +888,7 @@
                     <h2>${stateName} - Political Analysis</h2>
                     <p>2020 presidential election results overlaid on algorithmically-generated districts.</p>
 
-                    <div class="map-container">
+                    <div class="map-container full-width">
                         <div class="map-item">
                             <img src="${basePath}/states/${state}/political_analysis/maps/partisan_lean_districts_2020.png"
                                  alt="Partisan Lean Map"
