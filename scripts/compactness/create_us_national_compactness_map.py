@@ -237,8 +237,8 @@ def main():
             edgecolor='white',
             linewidth=0.05,
             alpha=0.9,
-            vmin=0,
-            vmax=1,
+            vmin=0.05,
+            vmax=0.45,
             missing_kwds={'color': 'lightgray'}
         )
 
@@ -261,9 +261,9 @@ def main():
         fig.suptitle(f'United States Congressional Districts - Compactness\nPolsby-Popper Scores ({args.year} Census, {total_districts} Districts)',
                      fontsize=22, fontweight='bold', y=0.98)
 
-        # Add colorbar
+        # Add colorbar with realistic range (0.05-0.45)
         from matplotlib.colors import Normalize
-        norm = Normalize(vmin=0, vmax=1)
+        norm = Normalize(vmin=0.05, vmax=0.45)
         sm = cm.ScalarMappable(cmap='RdYlGn', norm=norm)
         sm.set_array([])
         cbar = plt.colorbar(sm, ax=ax_main, orientation='horizontal',

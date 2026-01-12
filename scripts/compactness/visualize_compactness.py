@@ -27,10 +27,12 @@ def create_compactness_map(tracts_gdf, metric_name, metric_col, output_file, dpi
     """Create a compactness visualization map"""
     
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-    
+
     # Color by compactness score (red = low, green = high)
+    # Use realistic range (0.05-0.45) instead of theoretical (0-1)
+    # to show meaningful variation among real-world districts
     cmap = cm.get_cmap('RdYlGn')
-    norm = Normalize(vmin=0, vmax=1)
+    norm = Normalize(vmin=0.05, vmax=0.45)
     
     tracts_gdf.plot(
         ax=ax,
@@ -61,7 +63,7 @@ def create_compactness_map(tracts_gdf, metric_name, metric_col, output_file, dpi
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cbar = plt.colorbar(sm, ax=ax, orientation='horizontal', pad=0.05, aspect=50, shrink=0.8)
-    cbar.set_label(f'{metric_name} Score (0 = irregular, 1 = compact)', fontsize=12)
+    cbar.set_label(f'{metric_name} Score (0.05 = gerrymandered, 0.45 = highly compact)', fontsize=12)
     
     plt.tight_layout()
     output_file.parent.mkdir(parents=True, exist_ok=True)
