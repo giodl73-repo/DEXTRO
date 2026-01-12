@@ -363,6 +363,15 @@ def main():
         for metro_name, short_name in metros_list:
             total_metros += 1
 
+            # Create output filename
+            output_file = state_dir / f"{short_name}.png"
+
+            # Skip if already exists
+            if output_file.exists():
+                successful += 1
+                print(f"  [SKIP] Already exists: {output_file}")
+                continue
+
             report_progress(f"Creating metro map {total_metros}: {metro_name}")
 
             # Find metro in MSA dataset
@@ -380,9 +389,6 @@ def main():
 
             metro_row = metro_match.iloc[0]
             metro_geometry = metro_row.geometry
-
-            # Create output filename
-            output_file = state_dir / f"{short_name}.png"
 
             try:
                 success = create_metro_map(

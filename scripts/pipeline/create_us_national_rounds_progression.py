@@ -369,8 +369,20 @@ def main():
         print(f"\nFound {len(available_rounds)} rounds: {sorted(available_rounds.keys())}")
         print(f"\nGenerating {len(rounds_to_generate)} national maps...")
 
+    skipped = 0
+    created = 0
+
     for idx, round_num in enumerate(rounds_to_generate, 1):
         states_in_round = available_rounds[round_num]
+
+        # Check if output file already exists
+        output_file = output_dir / f'us_national_round_{round_num}_{args.year}.png'
+
+        if output_file.exists():
+            skipped += 1
+            if is_standalone:
+                print(f"\nRound {round_num}: [SKIP] Already exists")
+            continue
 
         report_progress(f"Creating round {round_num} map ({idx}/{len(rounds_to_generate)})")
 
@@ -394,9 +406,6 @@ def main():
             if data:
                 all_states_data.append(data)
 
-        # Create national map
-        output_file = output_dir / f'us_national_round_{round_num}_{args.year}.png'
-
         report_progress(f"Rendering round {round_num} map ({idx}/{len(rounds_to_generate)})")
 
         success = create_national_round_map(round_num, all_states_data,
@@ -404,13 +413,15 @@ def main():
 
         if is_standalone:
             if success:
-                print(f"  ✓ Created: {output_file.name}")
+                created += 1
+                print(f"  [OK] Created: {output_file.name}")
             else:
-                print(f"  ✗ Failed: round {round_num}")
+                print(f"  [ERROR] Failed: round {round_num}")
 
     if is_standalone:
         print(f"\n{'='*80}")
         print(f"National round progression maps complete!")
+        print(f"Created: {created}, Skipped: {skipped}")
         print(f"Output directory: {output_dir}")
         print(f"{'='*80}\n")
 
