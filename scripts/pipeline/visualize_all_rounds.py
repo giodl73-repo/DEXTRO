@@ -94,7 +94,7 @@ def visualize_single_round(args_tuple):
         zorder=10
     )
 
-    # Add region numbers (1-based) - white text with black outline for visibility
+    # Add region numbers (1-based) with target district counts - white text with black outline
     if num_regions <= 4:
         fontsize = 40
     elif num_regions <= 8:
@@ -106,12 +106,28 @@ def visualize_single_round(args_tuple):
     else:  # 52+ regions
         fontsize = 8
 
+    # Get region info for target districts
+    regions_info = metadata.get('regions', [])
+    region_targets = {}
+    for r in regions_info:
+        region_id = r.get('region_id')
+        target_districts = r.get('target_districts')
+        if region_id is not None and target_districts is not None:
+            region_targets[region_id] = target_districts
+
     for region_id in range(num_regions):
         region_data = tracts[tracts['region'] == region_id]
         if len(region_data) > 0:
             try:
                 centroid = region_data.geometry.union_all().representative_point()
-                text = ax.text(centroid.x, centroid.y, str(region_id + 1),
+
+                # Create label with target districts if available
+                if region_id in region_targets:
+                    label = f"{region_id + 1} ({region_targets[region_id]})"
+                else:
+                    label = str(region_id + 1)
+
+                text = ax.text(centroid.x, centroid.y, label,
                         fontsize=fontsize, fontweight='bold', ha='center', va='center',
                         color='white', zorder=10)
                 text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),

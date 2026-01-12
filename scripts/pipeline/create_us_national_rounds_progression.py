@@ -94,10 +94,21 @@ def load_state_round_data(state_dir, round_num, tracts_file, state_code, state_n
     # Create unique region IDs across states (state_code + region number)
     tracts['unique_region_id'] = tracts['state_code'] + '_' + tracts['region'].astype(str)
 
+    # Extract target districts for each region
+    regions_info = metadata.get('regions', [])
+    region_targets = {}
+    for r in regions_info:
+        region_id = r.get('region_id')
+        target_districts = r.get('target_districts')
+        if region_id is not None and target_districts is not None:
+            unique_id = f"{state_code}_{region_id}"
+            region_targets[unique_id] = target_districts
+
     return {
         'tracts': tracts,
         'num_regions': metadata['num_regions'],
-        'total_population': metadata.get('total_population', 0)
+        'total_population': metadata.get('total_population', 0),
+        'region_targets': region_targets
     }
 
 
@@ -114,6 +125,11 @@ def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
     # Combine all state tracts
     all_tracts_list = [data['tracts'] for data in all_states_data]
     us_tracts = pd.concat(all_tracts_list, ignore_index=True)
+
+    # Combine all region targets
+    all_region_targets = {}
+    for data in all_states_data:
+        all_region_targets.update(data.get('region_targets', {}))
 
     # Calculate total regions
     total_regions = us_tracts['unique_region_id'].nunique()
@@ -138,7 +154,7 @@ def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
     # Use extended color palette
     colors = list(cm.tab20.colors) + list(cm.tab20b.colors) + list(cm.tab20c.colors)
 
-    def plot_region(tracts_data, ax, region_name):
+    def plot_region(tracts_data, ax, region_name, show_labels=True):
         """Plot a region with colored tracts and boundaries."""
         if len(tracts_data) == 0:
             ax.set_axis_off()
@@ -183,12 +199,53 @@ def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
             alpha=0.7
         )
 
+        # Add region labels with target district counts
+        if show_labels:
+            # Scale font size based on number of regions
+            if total_regions <= 8:
+                fontsize = 10
+            elif total_regions <= 16:
+                fontsize = 8
+            elif total_regions <= 32:
+                fontsize = 6
+            elif total_regions <= 64:
+                fontsize = 5
+            else:
+                fontsize = 4
+
+            for region_id in unique_regions:
+                region_data = tracts_data[tracts_data['unique_region_id'] == region_id]
+                if len(region_data) > 0:
+                    try:
+                        centroid = region_data.geometry.union_all().representative_point()
+
+                        # Parse region_id (format: "CA_0", "TX_1", etc.)
+                        parts = region_id.split('_')
+                        if len(parts) == 2:
+                            state_code = parts[0]
+                            region_num = int(parts[1]) + 1  # 1-based
+
+                            # Create label with target districts if available
+                            if region_id in all_region_targets:
+                                label = f"{state_code}-{region_num} ({all_region_targets[region_id]})"
+                            else:
+                                label = f"{state_code}-{region_num}"
+
+                            text = ax.text(centroid.x, centroid.y, label,
+                                    fontsize=fontsize, fontweight='bold',
+                                    ha='center', va='center',
+                                    color='white', zorder=11)
+                            text.set_path_effects([path_effects.Stroke(linewidth=1.5, foreground='black'),
+                                                  path_effects.Normal()])
+                    except:
+                        pass
+
         ax.set_axis_off()
 
-    # Plot each region
-    plot_region(continental, ax_main, "Continental US")
-    plot_region(alaska, ax_alaska, "Alaska")
-    plot_region(hawaii, ax_hawaii, "Hawaii")
+    # Plot each region (labels only on continental US to avoid clutter on small insets)
+    plot_region(continental, ax_main, "Continental US", show_labels=True)
+    plot_region(alaska, ax_alaska, "Alaska", show_labels=False)
+    plot_region(hawaii, ax_hawaii, "Hawaii", show_labels=False)
 
     # Add title
     expected_regions = 2 ** round_num
