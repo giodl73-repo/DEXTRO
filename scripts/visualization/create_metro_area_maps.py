@@ -171,32 +171,51 @@ def create_metro_map(metro_name, metro_geometry, us_tracts, places_gdf, output_f
     # Create figure
     fig, ax = plt.subplots(figsize=(14, 10), dpi=dpi)
 
-    # Plot districts with distinct colors
+    # Create color mapping for districts
     n_districts = len(districts_gdf)
     cmap = plt.colormaps.get_cmap('tab20').resampled(n_districts)
 
-    for idx, (_, district) in enumerate(districts_proj.iterrows()):
-        district_geom = gpd.GeoSeries([district.geometry], crs='EPSG:5070')
-        district_geom.plot(
+    # Create district ID to color mapping
+    district_to_color = {}
+    for idx, (_, district) in enumerate(districts_gdf.iterrows()):
+        district_key = (district['state_code'], district['district'])
+        district_to_color[district_key] = cmap(idx)
+
+    # Plot individual tracts with white boundaries to show detail
+    metro_tracts_proj = metro_tracts.to_crs('EPSG:5070')
+    for _, tract in metro_tracts_proj.iterrows():
+        district_key = (tract['state_code'], tract['district'])
+        tract_geom = gpd.GeoSeries([tract.geometry], crs='EPSG:5070')
+        tract_geom.plot(
             ax=ax,
-            color=cmap(idx),
-            edgecolor='black',
-            linewidth=0.8,
-            alpha=0.7
+            color=district_to_color[district_key],
+            edgecolor='white',
+            linewidth=0.1,
+            alpha=0.8
         )
 
-        # Add district label at centroid
-        centroid = district.geometry.centroid
-        if centroid.within(district.geometry):
+    # Add thick black boundaries around districts
+    districts_proj.boundary.plot(
+        ax=ax,
+        edgecolor='black',
+        linewidth=1.2,
+        zorder=10
+    )
+
+    # Add district labels at centroids
+    for _, district in enumerate(districts_proj.iterrows()):
+        _, district_data = district
+        centroid = district_data.geometry.centroid
+        if centroid.within(district_data.geometry):
             ax.text(
                 centroid.x, centroid.y,
-                district['district_label'],
+                district_data['district_label'],
                 fontsize=10,
                 fontweight='bold',
                 ha='center',
                 va='center',
                 color='white',
-                zorder=10
+                zorder=11
             ).set_path_effects([
                 path_effects.Stroke(linewidth=2, foreground='black'),
                 path_effects.Normal()

@@ -270,15 +270,23 @@
             }
         }
 
+        /* Metro maps for USA (national view) - 2 per row */
         .map-container.metros-layout {
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: 1fr;
+            gap: 2rem;
         }
 
-        @media (min-width: 1200px) {
+        @media (min-width: 900px) {
             .map-container.metros-layout {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
+        }
+
+        /* Metro maps for individual states - 1 per row */
+        .map-container.metros-layout-state {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            max-width: 1400px;
         }
 
         .map-item {
@@ -1017,7 +1025,7 @@
                     <h2>${stateName} - Metropolitan Areas</h2>
                     <p>Focused district maps showing how congressional districts are configured within major metropolitan areas.</p>
 
-                    <div class="map-container metros-layout">
+                    <div class="map-container metros-layout-state">
                         ${mapsHtml}
                     </div>
 
