@@ -112,10 +112,17 @@ def create_compactness_map(tracts_gdf, metric_name, metric_col, output_file, dpi
     plt.close()
 
 
-def visualize_state_compactness(state_dir, census_year, dpi=150):
+def visualize_state_compactness(state_dir, state_code, census_year, dpi=150):
     """Create compactness visualizations for a single state."""
     state_dir = Path(state_dir)
-    state_name = state_dir.name
+
+    # Map state code to state name
+    state_code_to_name = {v.upper(): k for k, v in STATE_ABBREV.items()}
+    state_name = state_code_to_name.get(state_code.upper())
+
+    if not state_name:
+        print(f"ERROR: Unknown state code: {state_code}")
+        return 1
 
     # Load district_summary.csv for compactness data
     summary_file = state_dir / 'district_summary.csv'
@@ -393,6 +400,8 @@ def main():
                        help='Census year')
 
     # State scope arguments
+    parser.add_argument('--state', type=str,
+                       help='State code (2-letter, required if scope=state)')
     parser.add_argument('--state-dir', type=str,
                        help='State directory (required if scope=state)')
 
@@ -418,9 +427,9 @@ def main():
 
     # Validate scope-specific requirements
     if args.scope == 'state':
-        if not args.state_dir:
-            parser.error("--state-dir required when scope=state")
-        return visualize_state_compactness(args.state_dir, args.census_year, args.dpi)
+        if not args.state or not args.state_dir:
+            parser.error("--state and --state-dir required when scope=state")
+        return visualize_state_compactness(args.state_dir, args.state, args.census_year, args.dpi)
 
     elif args.scope == 'national':
         if not args.output_dir or not args.version:

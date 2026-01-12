@@ -94,7 +94,7 @@ def main():
         compactness_script = Path(__file__).parent.parent / 'compactness' / 'visualize_compactness.py'
         steps.append((
             "Compactness",
-            f'{sys.executable} {compactness_script} --scope state --state-dir {state_dir} --census-year {args.year} --dpi {args.dpi} --position {child_position}'.strip()
+            f'{sys.executable} {compactness_script} --scope state --state {state_code} --state-dir {state_dir} --census-year {args.year} --dpi {args.dpi} --position {child_position}'.strip()
         ))
 
     # Set up environment for child processes (inherit PARALLEL_MODE)
