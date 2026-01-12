@@ -265,11 +265,11 @@ class RecursiveBisection:
             # Get state name for better descriptions
             state_name = self.state_code
             try:
-                from config_2020 import STATE_CONFIG_2020
+                from scripts.config_2020 import STATE_CONFIG_2020
                 state_name = STATE_CONFIG_2020.get(self.state_code, {}).get('name', self.state_code)
             except ImportError:
                 try:
-                    from config_2010 import STATE_CONFIG_2010
+                    from scripts.config_2010 import STATE_CONFIG_2010
                     state_name = STATE_CONFIG_2010.get(self.state_code, {}).get('name', self.state_code)
                 except ImportError:
                     pass

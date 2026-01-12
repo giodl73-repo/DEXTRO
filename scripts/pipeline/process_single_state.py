@@ -41,10 +41,10 @@ def main():
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
     try:
         if args.year == '2020':
-            from config_2020 import STATE_CONFIG_2020
+            from scripts.config_2020 import STATE_CONFIG_2020
             STATE_CONFIG = STATE_CONFIG_2020
         elif args.year == '2010':
-            from config_2010 import STATE_CONFIG_2010
+            from scripts.config_2010 import STATE_CONFIG_2010
             STATE_CONFIG = STATE_CONFIG_2010
         else:
             print(f"ERROR: Year {args.year} not supported")

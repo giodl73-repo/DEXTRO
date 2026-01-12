@@ -367,10 +367,10 @@ def main():
         sys.path.insert(0, str(project_root))
 
         if args.year == '2020':
-            from config_2020 import STATE_CONFIG_2020
+            from scripts.config_2020 import STATE_CONFIG_2020
             config = STATE_CONFIG_2020.get(state_code, {})
         elif args.year == '2010':
-            from config_2010 import STATE_CONFIG_2010
+            from scripts.config_2010 import STATE_CONFIG_2010
             config = STATE_CONFIG_2010.get(state_code, {})
         else:
             config = {}

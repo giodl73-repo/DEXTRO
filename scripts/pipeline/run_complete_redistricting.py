@@ -60,12 +60,12 @@ sys.path.insert(0, str(project_root))
 
 # Import configuration files
 try:
-    from config_2020 import STATE_CONFIG_2020
+    from scripts.config_2020 import STATE_CONFIG_2020
 except ImportError:
     STATE_CONFIG_2020 = None
 
 try:
-    from config_2010 import STATE_CONFIG_2010
+    from scripts.config_2010 import STATE_CONFIG_2010
 except ImportError:
     STATE_CONFIG_2010 = None
 

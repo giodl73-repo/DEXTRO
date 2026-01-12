@@ -238,7 +238,7 @@ def main():
         project_root = script_dir.parent.parent
         sys.path.insert(0, str(project_root))
 
-        from config_2020 import STATE_CONFIG_2020
+        from scripts.config_2020 import STATE_CONFIG_2020
         config = STATE_CONFIG_2020.get(state_code, {})
         num_districts = config.get('districts', 1)
         print(f"State has {num_districts} congressional districts")
