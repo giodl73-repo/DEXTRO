@@ -532,7 +532,7 @@ python scripts/pipeline/run_state_redistricting.py --state VT --year 2020
 - `metis` Python package (optional, for ctypes wrapper)
 - `gpmetis` executable (required, for fallback)
 
-See `DEPENDENCIES.md` for installation instructions.
+See `docs/DEPENDENCIES.md` for installation instructions.
 
 ## Common Patterns
 
@@ -586,8 +586,8 @@ def load_data(file_path):
 
 ## See Also
 
-- `CODING_PATTERNS.md` - Detailed coding conventions
-- `ARCHITECTURE.md` - System design and algorithm details
+- `docs/CODING_PATTERNS.md` - Detailed coding conventions
+- `docs/ARCHITECTURE.md` - System design and algorithm details
 - `scripts/pipeline/README.md` - Pipeline orchestration
 - `scripts/data/README.md` - Data acquisition
 - `scripts/political/README.md` - Political/demographic analysis

@@ -10,11 +10,11 @@ These files document the development process, decisions, and issues encountered 
 
 The information from these files has been reorganized and consolidated into:
 
-- **CHANGELOG.md** - Project history, features, and changes
-- **DATA_FORMATS.md** - Data format specifications
-- **DEPENDENCIES.md** - Installation and setup
-- **CODING_PATTERNS.md** - Coding conventions and patterns
-- **ARCHITECTURE.md** - System design and algorithms
+- **docs/CHANGELOG.md** - Project history, features, and changes
+- **docs/DATA_FORMATS.md** - Data format specifications
+- **docs/DEPENDENCIES.md** - Installation and setup
+- **docs/CODING_PATTERNS.md** - Coding conventions and patterns
+- **docs/ARCHITECTURE.md** - System design and algorithms
 - **scripts/*/README.md** - Directory-specific documentation
 
 ## Archive Contents
@@ -38,18 +38,18 @@ The information from these files has been reorganized and consolidated into:
 - `PRODUCTION_RUN_READY.md` - Production run preparation
 
 ### Technical Documentation (Consolidated)
-- `METIS_COMPILE_GUIDE.md` → **DEPENDENCIES.md**
-- `PL94171_FORMAT.md` → **DATA_FORMATS.md**
-- `HISTORICAL_DATA_REQUIREMENTS.md` → **DATA_FORMATS.md**
-- `COMPACTNESS_IMPROVEMENTS.md` → **CHANGELOG.md**
-- `PHASE1_COMPACTNESS_IMPLEMENTATION.md` → **CHANGELOG.md**
+- `METIS_COMPILE_GUIDE.md` → **docs/DEPENDENCIES.md**
+- `PL94171_FORMAT.md` → **docs/DATA_FORMATS.md**
+- `HISTORICAL_DATA_REQUIREMENTS.md` → **docs/DATA_FORMATS.md**
+- `COMPACTNESS_IMPROVEMENTS.md` → **docs/CHANGELOG.md**
+- `PHASE1_COMPACTNESS_IMPLEMENTATION.md` → **docs/CHANGELOG.md**
 
 ### 2010 Census Work (In Progress)
 - `2010_CENSUS_PIPELINE_STATUS.md` - 2010 census pipeline status
 - `2010_REDOWNLOAD_INSTRUCTIONS.md` - 2010 data download instructions
 
 ### Miscellaneous
-- `IMPROVEMENTS_TODO.md` - Future improvements (now in CHANGELOG.md Future Work)
+- `IMPROVEMENTS_TODO.md` - Future improvements (now in docs/CHANGELOG.md Future Work)
 - `DPI_CHANGES.md` - DPI configuration changes
 - `BATCH_FILES.md` - Windows batch file documentation
 - `SCRIPT_HIERARCHY_ANALYSIS.md` - Script organization analysis

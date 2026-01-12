@@ -182,25 +182,25 @@ python scripts/pipeline/run_complete_redistricting.py --year 2020 --version v1 -
 - **`README.md`** - User-facing project description, setup instructions, usage examples
   - Read when: Understanding what the project does, how users interact with it
 
-- **`ARCHITECTURE.md`** - System design, data flow, component relationships, technical decisions
+- **`docs/ARCHITECTURE.md`** - System design, data flow, component relationships, technical decisions
   - Read when: Understanding how components interact, modifying core architecture, adding major features
 
 ### Development Guidelines
-- **`CODING_PATTERNS.md`** - Detailed coding conventions, naming patterns, progress reporting protocol
+- **`docs/CODING_PATTERNS.md`** - Detailed coding conventions, naming patterns, progress reporting protocol
   - Read when: Writing new code, ensuring consistency with existing patterns
 
-- **`CONTRIBUTING.md`** - Development workflow, git practices, code review guidelines
+- **`docs/CONTRIBUTING.md`** - Development workflow, git practices, code review guidelines
   - Read when: Making contributions, understanding development process
 
 ### Data & Setup
-- **`DATA_FORMATS.md`** - File formats, CSV schemas, data structures, column definitions
+- **`docs/DATA_FORMATS.md`** - File formats, CSV schemas, data structures, column definitions
   - Read when: Working with data files, understanding input/output formats
 
-- **`DEPENDENCIES.md`** - Required packages, installation instructions, environment setup
+- **`docs/DEPENDENCIES.md`** - Required packages, installation instructions, environment setup
   - Read when: Setting up development environment, debugging dependency issues
 
 ### History & Changes
-- **`CHANGELOG.md`** - Version history, feature additions, bug fixes
+- **`docs/CHANGELOG.md`** - Version history, feature additions, bug fixes
   - Read when: Understanding what changed between versions, tracking feature history
 
 - **`docs/archive/`** - Historical session notes from previous Claude conversations
@@ -208,17 +208,17 @@ python scripts/pipeline/run_complete_redistricting.py --year 2020 --version v1 -
 
 ### Quick Decision Tree
 
-**User asks about setup/installation?** → Read `README.md` + `DEPENDENCIES.md`
+**User asks about setup/installation?** → Read `README.md` + `docs/DEPENDENCIES.md`
 
-**Need to understand how something works?** → Read `ARCHITECTURE.md`
+**Need to understand how something works?** → Read `docs/ARCHITECTURE.md`
 
-**Writing new code?** → Read `CODING_PATTERNS.md`
+**Writing new code?** → Read `docs/CODING_PATTERNS.md`
 
-**Working with data files?** → Read `DATA_FORMATS.md`
+**Working with data files?** → Read `docs/DATA_FORMATS.md`
 
-**Understanding recent changes?** → Read `CHANGELOG.md`
+**Understanding recent changes?** → Read `docs/CHANGELOG.md`
 
-**Making modifications/contributions?** → Read `CONTRIBUTING.md`
+**Making modifications/contributions?** → Read `docs/CONTRIBUTING.md`
 
 **General orientation/quick reference?** → Read `CLAUDE.md` (this file)
 

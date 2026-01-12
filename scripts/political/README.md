@@ -406,7 +406,7 @@ python scripts/pipeline/run_complete_redistricting.py --skip-demographic
 
 ## See Also
 
-- `CODING_PATTERNS.md` - GEOID handling, map patterns, error handling
-- `ARCHITECTURE.md` - System design
+- `docs/CODING_PATTERNS.md` - GEOID handling, map patterns, error handling
+- `docs/ARCHITECTURE.md` - System design
 - `scripts/pipeline/README.md` - Main pipeline orchestration
 - `scripts/data/README.md` - Data acquisition
