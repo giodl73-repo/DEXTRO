@@ -1059,7 +1059,7 @@ data/processed/tracts_from_blocks/
 
 ---
 
-## Enhancement 9: Per-State Analysis Refactoring 📋 PLANNED
+## Enhancement 9: Per-State Analysis Refactoring 🔄 IN PROGRESS
 
 ### Current State (Bottleneck)
 
@@ -1364,6 +1364,45 @@ Savings: 1-2 hours (analysis no longer adds sequential overhead)
 - All `create_us_national_*.py` scripts
 - `create_metro_area_maps.py`
 - `generate_dashboard.py`
+
+### Current Progress (2026-01-12)
+
+**✅ Completed - Phases 1-2: Compactness Refactoring**
+
+1. **Scope-Based Architecture Implemented**:
+   - Refactored `visualize_compactness.py` to support `--scope {state|national}`
+   - State scope: `--scope state --state VT --state-dir <path> --census-year 2020`
+   - National scope: `--scope national --output-dir <path> --version v1 --census-year 2020`
+   - Follows progress bar protocol (TQDM_POSITION, STATUS messages)
+   - Implements skip logic (--force flag)
+
+2. **Pipeline Integration**:
+   - Added `--run-analysis` flag to `process_single_state.py`
+   - Compactness runs per-state when flag enabled
+   - Updated `run_complete_redistricting.py` to use `--scope national`
+   - Eliminated 2 separate scripts (wrapper + national) into 1 unified script
+
+3. **Scripts Modified**:
+   - ✅ `scripts/compactness/visualize_compactness.py` - Scope-based refactoring
+   - ✅ `scripts/pipeline/process_single_state.py` - Added --run-analysis support
+   - ✅ `scripts/pipeline/run_complete_redistricting.py` - Uses --scope national
+
+4. **Scripts Ready for Deletion** (after full validation):
+   - `scripts/compactness/run_compactness_visualization.py` - Replaced by --scope national
+   - `scripts/compactness/create_us_national_compactness_map.py` - Merged into visualize_compactness.py
+
+**📋 Remaining Work**:
+- Phase 3: Test compactness integration end-to-end
+- Phase 4: Apply scope pattern to `visualize_partisan_lean.py` (719 lines)
+- Phase 5: Apply scope pattern to `visualize_district_demographics.py`
+- Phase 6: Test complete pipeline with all analysis enabled
+- Phase 7: Delete obsolete wrapper scripts
+
+**🎯 Validation Status**:
+- [x] State scope tested (Vermont, Wyoming, Rhode Island)
+- [ ] National scope tested with force regeneration
+- [ ] Per-state pipeline integration tested
+- [ ] End-to-end test with --run-analysis
 
 ### Risk Mitigation
 
