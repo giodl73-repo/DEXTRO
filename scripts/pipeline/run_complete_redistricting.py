@@ -137,23 +137,28 @@ def process_state_sequential(state_code, us_dir, state_config, year='2020', skip
     scripts_dir = Path(__file__).parent
 
     # Define all commands
-    flags = []
+    # Common flags for all scripts
+    common_flags = []
     if print_only:
-        flags.append('--print-only')
+        common_flags.append('--print-only')
     if debug:
-        flags.append('--debug')
-    flags.append(f'--dpi {dpi}')
+        common_flags.append('--debug')
+    common_flags.append(f'--dpi {dpi}')
+    common_flags_str = ' '.join(common_flags)
+
+    # Redistricting-specific flags
+    redistricting_flags = common_flags.copy()
     if partition_mode != 'normal':
-        flags.append(f'--partition-mode {partition_mode}')
-    flags_str = ' '.join(flags)
+        redistricting_flags.append(f'--partition-mode {partition_mode}')
+    redistricting_flags_str = ' '.join(redistricting_flags)
 
     # Pipeline steps - pass position 999 to hide child progress bars
     steps = [
-        ("Redistricting", f'{sys.executable} {scripts_dir}/run_state_redistricting.py --state {state_code} --year {year} --output-dir {state_dir} --position 999 {flags_str}'.strip(), 1800),
-        ("Cities", f'{sys.executable} {scripts_dir}/add_cities_to_districts.py {state_dir} --year {year} --position 999 {flags_str}'.strip(), 600),
-        ("Summary", f'{sys.executable} {scripts_dir}/create_final_district_summary.py {state_dir} --year {year} --position 999 {flags_str}'.strip(), 300),
-        ("Round maps", f'{sys.executable} {scripts_dir}/visualize_all_rounds.py {state_dir} --year {year} --position 999 {flags_str}'.strip(), 600),
-        ("District maps", f'{sys.executable} {scripts_dir}/create_individual_district_maps.py {state_dir} --year {year} --position 999 {flags_str}'.strip(), 1800)
+        ("Redistricting", f'{sys.executable} {scripts_dir}/run_state_redistricting.py --state {state_code} --year {year} --output-dir {state_dir} --position 999 {redistricting_flags_str}'.strip(), 1800),
+        ("Cities", f'{sys.executable} {scripts_dir}/add_cities_to_districts.py {state_dir} --year {year} --position 999 {common_flags_str}'.strip(), 600),
+        ("Summary", f'{sys.executable} {scripts_dir}/create_final_district_summary.py {state_dir} --year {year} --position 999 {common_flags_str}'.strip(), 300),
+        ("Round maps", f'{sys.executable} {scripts_dir}/visualize_all_rounds.py {state_dir} --year {year} --position 999 {common_flags_str}'.strip(), 600),
+        ("District maps", f'{sys.executable} {scripts_dir}/create_individual_district_maps.py {state_dir} --year {year} --position 999 {common_flags_str}'.strip(), 1800)
     ]
 
     # ONE progress bar for entire state pipeline
@@ -439,8 +444,9 @@ def main():
         if mode == 'sequential':
             # SEQUENTIAL MODE: Process one state at a time
             # USA-level progress bar at position 0
+            mode_label = " [Edge-Weighted]" if args.partition_mode == 'edge-weighted' else ""
             with tqdm(states_to_process,
-                      desc=f"USA Redistricting - {args.year} Census",
+                      desc=f"USA Redistricting{mode_label} - {args.year} Census",
                       unit="state",
                       ncols=120,
                       position=0,
@@ -505,8 +511,9 @@ def main():
                 state_bars[i + 1] = bar  # Position is i+1
 
             # USA-level progress bar at position 0
+            mode_label = " [Edge-Weighted]" if args.partition_mode == 'edge-weighted' else ""
             usa_pbar = tqdm(total=len(states_to_process),
-                           desc=f"USA Redistricting (Parallel) - {args.year} Census",
+                           desc=f"USA Redistricting (Parallel){mode_label} - {args.year} Census",
                            unit="state",
                            ncols=120,
                            position=0,

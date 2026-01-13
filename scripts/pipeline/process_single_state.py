@@ -71,26 +71,31 @@ def main():
     scripts_dir = Path(__file__).parent
 
     # Define pipeline steps
-    flags = []
+    # Common flags for all scripts
+    common_flags = []
     if args.print_only:
-        flags.append('--print-only')
+        common_flags.append('--print-only')
     if args.debug:
-        flags.append('--debug')
-    flags.append(f'--dpi {args.dpi}')
+        common_flags.append('--debug')
+    common_flags.append(f'--dpi {args.dpi}')
+    common_flags_str = ' '.join(common_flags)
+
+    # Redistricting-specific flags
+    redistricting_flags = common_flags.copy()
     if args.partition_mode != 'normal':
-        flags.append(f'--partition-mode {args.partition_mode}')
-    flags_str = ' '.join(flags)
+        redistricting_flags.append(f'--partition-mode {args.partition_mode}')
+    redistricting_flags_str = ' '.join(redistricting_flags)
 
     # In parallel mode, suppress child progress bars (use position 999)
     # Only the wrapper shows a status indicator at the assigned position
     child_position = 999  # 999 = hide progress bars
 
     steps = [
-        ("Redistricting", f'{sys.executable} {scripts_dir}/run_state_redistricting.py --state {state_code} --year {args.year} --output-dir {state_dir} --position {child_position} {flags_str}'.strip()),
-        ("Cities", f'{sys.executable} {scripts_dir}/add_cities_to_districts.py {state_dir} --year {args.year} --position {child_position} {flags_str}'.strip()),
-        ("Summary", f'{sys.executable} {scripts_dir}/create_final_district_summary.py {state_dir} --year {args.year} --position {child_position} {flags_str}'.strip()),
-        ("Round maps", f'{sys.executable} {scripts_dir}/visualize_all_rounds.py {state_dir} --year {args.year} --position {child_position} {flags_str}'.strip()),
-        ("District maps", f'{sys.executable} {scripts_dir}/create_individual_district_maps.py {state_dir} --year {args.year} --position {child_position} {flags_str}'.strip())
+        ("Redistricting", f'{sys.executable} {scripts_dir}/run_state_redistricting.py --state {state_code} --year {args.year} --output-dir {state_dir} --position {child_position} {redistricting_flags_str}'.strip()),
+        ("Cities", f'{sys.executable} {scripts_dir}/add_cities_to_districts.py {state_dir} --year {args.year} --position {child_position} {common_flags_str}'.strip()),
+        ("Summary", f'{sys.executable} {scripts_dir}/create_final_district_summary.py {state_dir} --year {args.year} --position {child_position} {common_flags_str}'.strip()),
+        ("Round maps", f'{sys.executable} {scripts_dir}/visualize_all_rounds.py {state_dir} --year {args.year} --position {child_position} {common_flags_str}'.strip()),
+        ("District maps", f'{sys.executable} {scripts_dir}/create_individual_district_maps.py {state_dir} --year {args.year} --position {child_position} {common_flags_str}'.strip())
     ]
 
     # Add optional analysis steps
