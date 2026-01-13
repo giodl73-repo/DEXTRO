@@ -107,26 +107,10 @@ def process_state_sequential(state_code, us_dir, state_config, year='2020', skip
     if not print_only:
         states_dir.mkdir(parents=True, exist_ok=True)
 
-        if skip_existing and state_dir.exists():
-            # Check if all required output files exist
-            required_files = [
-                state_dir / 'final_assignments.pkl',
-                state_dir / 'district_summary.csv',
-                state_dir / 'district_cities.csv',
-                state_dir / 'maps'
-            ]
-            if all(f.exists() for f in required_files):
-                # Show skip quickly
-                with tqdm(total=1,
-                         desc=f"{state_name} [{num_districts}D] SKIPPED",
-                         unit="step",
-                         position=position,
-                         ncols=120,
-                         leave=False) as pbar:
-                    pbar.update(1)
-                    if debug:
-                        time.sleep(0.2)
-                return True
+        # NOTE: Removed blanket skip check - now using per-stage skip logic
+        # Each stage (redistricting, cities, summary, round maps, district maps, analysis)
+        # checks its own outputs and skips if complete. This allows incremental updates
+        # (e.g., adding new analysis stages without reprocessing everything)
 
         # Check prerequisites (only for multi-district states)
         if num_districts > 1:
@@ -218,18 +202,8 @@ def process_state_worker(args):
         if not print_only:
             states_dir.mkdir(parents=True, exist_ok=True)
 
-            if skip_existing and state_dir.exists():
-                # Show skip quickly
-                with tqdm(total=1,
-                         desc=f"{state_name} [{num_districts}D] SKIP (exists)",
-                         unit="step",
-                         position=position,
-                         ncols=120,
-                         leave=False) as pbar:
-                    pbar.update(1)
-                    if debug:
-                        time.sleep(0.2)
-                return (state_code, True, "SKIPPED")
+            # NOTE: Removed blanket skip check - now using per-stage skip logic
+            # Each stage checks its own outputs and skips if complete
 
             # Check prerequisites (only for multi-district states)
             if num_districts > 1:
@@ -475,21 +449,8 @@ def main():
                     # Update USA progress bar
                     usa_pbar.set_description(f"USA Redistricting - {args.year} Census: {state_name}")
 
-                    # Check if state will be skipped (before processing)
-                    will_skip = False
-                    if not args.print_only and not args.reprocess:
-                        states_dir = output_dir / 'states'
-                        state_dir = states_dir / state_name.lower().replace(' ', '_')
-                        if state_dir.exists():
-                            required_files = [
-                                state_dir / 'final_assignments.pkl',
-                                state_dir / 'district_summary.csv',
-                                state_dir / 'district_cities.csv',
-                                state_dir / 'maps'
-                            ]
-                            if all(f.exists() for f in required_files):
-                                will_skip = True
-                                skipped_states.append(state_code)
+                    # NOTE: Removed blanket skip check - now using per-stage skip logic
+                    # process_single_state.py handles per-stage checks
 
                     # Process state at position 1 (below USA bar)
                     success = process_state_sequential(
@@ -504,8 +465,7 @@ def main():
                     )
 
                     if success:
-                        if not will_skip:
-                            successful.append(state_code)
+                        successful.append(state_code)
                         usa_pbar.set_postfix_str(f"✓ {len(successful)}/{len(states_to_process)}")
                     else:
                         failed.append(state_code)
@@ -558,24 +518,8 @@ def main():
                 states_dir = output_dir / 'states'
                 state_dir = states_dir / state_name.lower().replace(' ', '_')
 
-                # Check if state output already exists
-                skip_state = False
-                if state_dir.exists():
-                    required_files = [
-                        state_dir / 'final_assignments.pkl',
-                        state_dir / 'district_summary.csv',
-                        state_dir / 'district_cities.csv',
-                        state_dir / 'maps'
-                    ]
-                    if all(f.exists() for f in required_files):
-                        skip_state = True
-                        skipped_states.append(state_code)
-                        # Update progress bar to show skip
-                        state_bars[position].set_description_str(f"[{position}] {state_name} - SKIPPED".ljust(120))
-                        state_bars[position].update(1)
-                        state_bars[position].refresh()
-                        usa_pbar.update(1)
-                        continue
+                # NOTE: Removed blanket skip check - now using per-stage skip logic
+                # Each stage in process_single_state.py checks its own outputs
 
                 # Build command
                 scripts_dir = Path(__file__).parent

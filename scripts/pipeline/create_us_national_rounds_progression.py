@@ -154,7 +154,7 @@ def load_state_round_data(state_dir, round_num, tracts_file, state_code, state_n
     }
 
 
-def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
+def create_national_round_map(round_num, all_states_data, output_file, dpi=150, progress_callback=None):
     """
     Create national map for a specific round showing regions across all states.
 
@@ -163,6 +163,12 @@ def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
     if not all_states_data:
         print(f"No data for round {round_num}")
         return False
+
+    def report(msg):
+        if progress_callback:
+            progress_callback(msg)
+
+    report(f"Round {round_num} - Combining tract data...")
 
     # Combine all state tracts
     all_tracts_list = [data['tracts'] for data in all_states_data]
@@ -285,11 +291,15 @@ def create_national_round_map(round_num, all_states_data, output_file, dpi=150):
         ax.set_axis_off()
 
     # Plot each region (labels only on continental US to avoid clutter on small insets)
+    report(f"Round {round_num} - Plotting continental US...")
     plot_region(continental, ax_main, "Continental US", show_labels=True)
+
+    report(f"Round {round_num} - Plotting Alaska & Hawaii...")
     plot_region(alaska, ax_alaska, "Alaska", show_labels=False)
     plot_region(hawaii, ax_hawaii, "Hawaii", show_labels=False)
 
     # Add title
+    report(f"Round {round_num} - Finalizing map...")
     expected_regions = 2 ** round_num
     title = f'U.S. Congressional Districts - Round {round_num}\n'
     title += f'{total_regions} regions nationwide (target: {expected_regions} from 2^{round_num} bisections)'
@@ -447,16 +457,20 @@ def main():
             if data:
                 all_states_data.append(data)
 
-        report_progress(f"Rendering round {round_num} map ({idx}/{len(rounds_to_generate)})")
+        report_progress(f"Rendering round {round_num} map ({idx}/{len(rounds_to_generate)}) - Loading data...")
 
         success = create_national_round_map(round_num, all_states_data,
-                                           output_file, dpi=args.dpi)
+                                           output_file, dpi=args.dpi,
+                                           progress_callback=report_progress)
 
-        if is_standalone:
-            if success:
-                created += 1
+        if success:
+            created += 1
+            report_progress(f"Round {round_num} complete ({idx}/{len(rounds_to_generate)})")
+            if is_standalone:
                 print(f"  [OK] Created: {output_file.name}")
-            else:
+        else:
+            report_progress(f"Round {round_num} FAILED ({idx}/{len(rounds_to_generate)})")
+            if is_standalone:
                 print(f"  [ERROR] Failed: round {round_num}")
 
     if is_standalone:
