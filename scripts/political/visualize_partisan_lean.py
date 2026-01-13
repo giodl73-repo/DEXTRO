@@ -512,7 +512,7 @@ def visualize_intermediate_rounds(run_dir, analysis_dir, tracts_gdf, state_name,
         tracts_gdf.drop(columns=['region_1based', 'region_political', 'lean', 'dem_margin'], inplace=True, errors='ignore')
 
 
-def visualize_state_political(state_dir, state_code, election_year, census_year, dpi=150, skip_rounds=False):
+def visualize_state_political(state_dir, state_code, election_year, census_year, dpi=150, skip_rounds=False, force=False):
     """Visualize political lean for a single state."""
     state_dir = Path(state_dir)
 
@@ -546,7 +546,17 @@ def visualize_state_political(state_dir, state_code, election_year, census_year,
         print(f"Run analyze_districts.py first")
         return 1
 
-    # Load tract geometries
+    # CHECK IF OUTPUTS EXIST BEFORE LOADING DATA
+    maps_dir = analysis_dir / 'maps'
+    required_maps = [
+        maps_dir / f'partisan_lean_{state_name_lower}_{election_year}.png'
+    ]
+
+    if not force and all(m.exists() for m in required_maps):
+        print(f"Political visualization already exists for {state_name} - skipping")
+        return 0
+
+    # Now load tract geometries (only if we need to generate)
     tracts_file = Path(f'data/raw/{state_code.lower()}_tracts_{census_year}.parquet')
     if not tracts_file.exists():
         print(f"ERROR: Tract geometries not found: {tracts_file}")
@@ -609,7 +619,7 @@ def main():
         if not args.state or not args.state_dir:
             parser.error("--state and --state-dir required when scope=state")
         return visualize_state_political(args.state_dir, args.state, args.election_year,
-                                        args.census_year, args.dpi, args.skip_rounds)
+                                        args.census_year, args.dpi, args.skip_rounds, args.force)
 
     elif args.scope == 'national':
         if not args.output_dir or not args.version:

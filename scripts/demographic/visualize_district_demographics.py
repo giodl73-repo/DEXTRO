@@ -265,7 +265,7 @@ def create_diversity_map(tracts_gdf, district_stats, state_name, output_file, dp
     print(f"  Created: {output_file.name}")
 
 
-def visualize_state_demographics(state_dir, state_code, census_year, dpi=150):
+def visualize_state_demographics(state_dir, state_code, census_year, dpi=150, force=False):
     """Visualize demographics for a single state."""
     state_dir = Path(state_dir)
 
@@ -276,14 +276,25 @@ def visualize_state_demographics(state_dir, state_code, census_year, dpi=150):
         print(f"Run analyze_district_demographics.py first")
         return 1
 
-    # Load tract geometries
+    # CHECK IF OUTPUTS EXIST BEFORE LOADING DATA
+    output_dir = state_dir / 'demographic_analysis' / 'maps'
+    required_maps = [
+        output_dir / 'gender_balance.png',
+        output_dir / 'majority_race.png',
+        output_dir / 'diversity_index.png'
+    ]
+
+    if not force and all(m.exists() for m in required_maps):
+        print(f"Demographic visualization already exists for {state_code} - skipping")
+        return 0
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Now load data (only if we need to generate)
     tracts_file = Path(f'data/raw/{state_code.lower()}_tracts_{census_year}.parquet')
     if not tracts_file.exists():
         print(f"ERROR: Tract geometries not found: {tracts_file}")
         return 1
-
-    output_dir = state_dir / 'demographic_analysis' / 'maps'
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Load demographic data
     demo_df = pd.read_csv(analysis_file)
@@ -347,7 +358,7 @@ def main():
     if args.scope == 'state':
         if not args.state or not args.state_dir:
             parser.error("--state and --state-dir required when scope=state")
-        return visualize_state_demographics(args.state_dir, args.state, args.census_year, args.dpi)
+        return visualize_state_demographics(args.state_dir, args.state, args.census_year, args.dpi, args.force)
 
     elif args.scope == 'national':
         if not args.output_dir or not args.version:
