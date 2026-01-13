@@ -9,10 +9,11 @@ This document captures critical patterns and conventions used throughout the cod
 4. [GEOID Handling](#geoid-handling-critical)
 5. [Map Visualization](#map-visualization)
 6. [Subprocess Communication](#subprocess-communication)
-7. [File Naming Conventions](#file-naming-conventions)
-8. [Git Commit Messages](#git-commit-messages)
-9. [Error Handling](#error-handling)
-10. [When to Use What](#when-to-use-what)
+7. [Scope-Based Analysis Pattern](#scope-based-analysis-pattern)
+8. [File Naming Conventions](#file-naming-conventions)
+9. [Git Commit Messages](#git-commit-messages)
+10. [Error Handling](#error-handling)
+11. [When to Use What](#when-to-use-what)
 
 ---
 
@@ -337,6 +338,296 @@ env['DPI'] = str(dpi)
 # Pass to child
 subprocess.Popen(cmd, env=env, ...)
 ```
+
+---
+
+## Scope-Based Analysis Pattern
+
+### Overview
+
+**All analysis and visualization scripts must support both state and national scope using a single unified script.**
+
+This pattern enables:
+- ✅ **Parallel execution**: Per-state analysis runs during state processing
+- ✅ **Code reuse**: Same script for both scopes (no duplication)
+- ✅ **Maintainability**: One place to update logic
+- ✅ **Performance**: Saves 1-2 hours by parallelizing analysis
+
+### Standard Pattern
+
+Every analysis/visualization script follows this structure:
+
+```python
+#!/usr/bin/env python3
+"""
+Analyze/visualize XXX characteristics of districts.
+"""
+
+import pandas as pd
+import geopandas as gpd
+from pathlib import Path
+import argparse
+import sys
+
+
+def analyze_state_xxx(state_dir, census_year='2020'):
+    """Analyze XXX for a single state."""
+    state_dir = Path(state_dir)
+
+    # Load ONLY this state's data
+    # NEVER load all 50 states in state scope!
+
+    # Output to: state_dir / 'xxx_analysis' / 'district_xxx.csv'
+    return 0
+
+
+def visualize_state_xxx(state_dir, state_code, census_year, dpi=150):
+    """Visualize XXX for a single state."""
+    state_dir = Path(state_dir)
+
+    # Check if analysis exists
+    analysis_file = state_dir / 'xxx_analysis' / 'district_xxx.csv'
+    if not analysis_file.exists():
+        print(f"ERROR: Analysis not found: {analysis_file}")
+        print(f"Run analyze_xxx.py first")
+        return 1
+
+    # Load state-specific data ONLY
+    tracts_file = Path(f'data/raw/{state_code.lower()}_tracts_{census_year}.parquet')
+    tracts_gdf = gpd.read_parquet(tracts_file)
+
+    # Load analysis results
+    analysis_df = pd.read_csv(analysis_file)
+
+    # Create visualizations
+    output_dir = state_dir / 'xxx_analysis' / 'maps'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    create_xxx_map(tracts_gdf, analysis_df, output_dir / 'xxx_map.png', dpi)
+
+    return 0
+
+
+def visualize_national_xxx(output_dir, version, census_year, dpi=150, position=-1, force=False):
+    """Aggregate all states into national visualization."""
+    base_dir = Path(output_dir)
+
+    # Progress bar protocol
+    send_status = position >= 0
+    is_standalone = not send_status
+
+    def report_progress(msg):
+        if send_status:
+            print(f"STATUS:{position}:{msg}", flush=True)
+
+    # Output file
+    output_file = base_dir / f'us_national_xxx_{census_year}.png'
+
+    # Check if output exists
+    if not force and output_file.exists():
+        if is_standalone:
+            print(f"Output already exists: {output_file}")
+            print("Use --force to regenerate")
+        return 0
+
+    report_progress("Creating national XXX map - Loading data")
+
+    # Load ALL 50 states
+    all_state_data = []
+    for state_name in STATE_NAMES:
+        state_dir = base_dir / 'states' / state_name
+        if not state_dir.exists():
+            continue
+
+        # Load state's analysis results
+        analysis_file = state_dir / 'xxx_analysis' / 'district_xxx.csv'
+        if analysis_file.exists():
+            df = pd.read_csv(analysis_file)
+            df['state'] = state_name
+            all_state_data.append(df)
+
+    if not all_state_data:
+        print("ERROR: No state data found")
+        return 1
+
+    us_data = pd.concat(all_state_data, ignore_index=True)
+
+    # Create national visualization
+    create_national_xxx_map(us_data, output_file, dpi)
+
+    report_progress("Creating national XXX map - Complete")
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Analyze/visualize XXX at state or national scope'
+    )
+
+    # Scope selection
+    parser.add_argument('--scope', choices=['state', 'national'], default='national',
+                       help='Scope: state (single state) or national (all states, default)')
+    parser.add_argument('--census-year', type=str, default='2020',
+                       choices=['2020', '2010', '2000'],
+                       help='Census year (default: 2020)')
+
+    # State scope arguments
+    parser.add_argument('--state', type=str,
+                       help='State code (2-letter, required if scope=state)')
+    parser.add_argument('--state-dir', type=str,
+                       help='State directory (required if scope=state)')
+
+    # National scope arguments
+    parser.add_argument('--output-dir', type=str,
+                       help='Base output directory (required if scope=national)')
+    parser.add_argument('--version', type=str,
+                       help='Version (required if scope=national)')
+
+    # Common arguments
+    parser.add_argument('--dpi', type=int, default=150,
+                       choices=[72, 100, 150, 200, 300],
+                       help='DPI for output maps (default: 150)')
+    parser.add_argument('--force', action='store_true',
+                       help='Force regeneration even if outputs exist')
+    parser.add_argument('--position', type=int, default=-1,
+                       help='Progress bar position (for parent coordination)')
+
+    args = parser.parse_args()
+
+    # Validate and dispatch
+    if args.scope == 'state':
+        if not args.state or not args.state_dir:
+            parser.error("--state and --state-dir required when scope=state")
+        return visualize_state_xxx(args.state_dir, args.state,
+                                   args.census_year, args.dpi)
+
+    elif args.scope == 'national':
+        if not args.output_dir or not args.version:
+            parser.error("--output-dir and --version required when scope=national")
+        return visualize_national_xxx(args.output_dir, args.version,
+                                      args.census_year, args.dpi,
+                                      args.position, args.force)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
+```
+
+### Integration Points
+
+#### 1. Per-State Pipeline (Parallel)
+
+Add to `process_single_state.py`:
+
+```python
+if args.run_analysis:
+    # Analysis script
+    xxx_analyze = Path(__file__).parent.parent / 'xxx' / 'analyze_xxx.py'
+    steps.append((
+        "XXX analysis",
+        f'{sys.executable} {xxx_analyze} {state_dir} --census-year {args.year}'.strip()
+    ))
+
+    # Visualization script
+    xxx_visualize = Path(__file__).parent.parent / 'xxx' / 'visualize_xxx.py'
+    steps.append((
+        "XXX visualization",
+        f'{sys.executable} {xxx_visualize} --scope state --state {state_code} '
+        f'--state-dir {state_dir} --census-year {args.year} --dpi {args.dpi} '
+        f'--position {child_position}'.strip()
+    ))
+```
+
+**Key points:**
+- Only runs if `--run-analysis` enabled (default: True)
+- Uses `--scope state` to invoke state-specific function
+- Passes `child_position=999` to suppress child progress bars
+- Analysis runs BEFORE visualization
+
+#### 2. Post-Processing (Sequential)
+
+Add to `run_complete_redistricting.py`:
+
+```python
+# Create national XXX map (after per-state analysis completes)
+if not args.skip_xxx and (output_dir.exists() or args.print_only):
+    xxx_script = scripts_dir.parent / 'xxx' / 'visualize_xxx.py'
+    pipeline_steps.append({
+        'name': 'Create national XXX map',
+        'command': f'{sys.executable} {xxx_script} --scope national '
+                   f'--output-dir {output_dir} --version {args.version} '
+                   f'--census-year {args.year} --dpi {args.dpi}'.strip(),
+        'critical': False
+    })
+```
+
+**Key points:**
+- Uses `--scope national` to invoke national aggregation function
+- Runs AFTER all per-state processing completes
+- Aggregates per-state analysis results into one national map
+
+### Critical Rules
+
+1. **NEVER load all 50 states in state scope**
+   ```python
+   # BAD - loads 84,000 tracts nationwide
+   if args.scope == 'state':
+       all_tracts = gpd.read_parquet('data/raw/us_all_tracts.parquet')
+
+   # GOOD - loads only this state's tracts
+   if args.scope == 'state':
+       tracts = gpd.read_parquet(f'data/raw/{state_code.lower()}_tracts_{census_year}.parquet')
+   ```
+
+2. **Analysis before visualization**
+   - Per-state: analyze_xxx.py → visualize_xxx.py --scope state
+   - National: All states analyzed → visualize_xxx.py --scope national
+
+3. **Default scope should be national**
+   - Maintains backward compatibility with old scripts
+   - State scope is explicit: `--scope state`
+
+4. **Follow progress bar protocol**
+   - State scope: Respects `--position` parameter
+   - National scope: Uses STATUS messages when position >= 0
+
+5. **Implement skip logic**
+   - Both state and national functions check for existing outputs
+   - Use `--force` to regenerate
+
+### Examples
+
+**Existing implementations:**
+- ✅ `scripts/compactness/visualize_compactness.py`
+- ✅ `scripts/political/visualize_partisan_lean.py`
+- ✅ `scripts/demographic/visualize_district_demographics.py`
+
+**Usage:**
+
+```bash
+# State scope (called by process_single_state.py)
+python scripts/xxx/visualize_xxx.py \
+  --scope state \
+  --state CA \
+  --state-dir outputs/us_2020_v1/states/california \
+  --census-year 2020 \
+  --dpi 150
+
+# National scope (called by run_complete_redistricting.py)
+python scripts/xxx/visualize_xxx.py \
+  --scope national \
+  --output-dir outputs/us_2020_v1 \
+  --version v1 \
+  --census-year 2020 \
+  --dpi 150
+```
+
+### Benefits
+
+- **Performance**: Per-state analysis runs in parallel (50 states × 4 workers = massive speedup)
+- **Maintainability**: Single script to update, not three (wrapper, state logic, national logic)
+- **Consistency**: Same code path ensures state and national outputs match
+- **Flexibility**: Can re-run national without re-analyzing all states
 
 ---
 

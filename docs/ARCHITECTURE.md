@@ -479,6 +479,145 @@ if not force and output_file.exists():
     return 0  # Skip
 ```
 
+### 7. Scope-Based Analysis Pattern
+
+**Decision**: Single script handles both per-state and national scope
+
+**Why this design?**
+- ✅ Parallel-first: Per-state analysis runs during state processing (overlaps with other states)
+- ✅ DRY: Same visualization code for state and national (no duplication)
+- ✅ Maintainable: One script to update, not three (state wrapper, national wrapper, core logic)
+- ✅ Consistent interface: All analysis scripts use same `--scope {state|national}` pattern
+
+**Architecture**:
+
+```
+Per-State (Parallel):
+  process_single_state.py
+    ├─ Redistricting
+    ├─ Cities, Summary, Maps
+    └─ Analysis (if --run-analysis)
+         ├─ Political: analyze_districts.py → visualize_partisan_lean.py --scope state
+         ├─ Demographic: analyze_district_demographics.py → visualize_district_demographics.py --scope state
+         └─ Compactness: visualize_compactness.py --scope state
+
+Post-Processing (Sequential):
+  run_complete_redistricting.py
+    ├─ National Political Map: visualize_partisan_lean.py --scope national
+    ├─ National Demographic Map: visualize_district_demographics.py --scope national
+    └─ National Compactness Map: visualize_compactness.py --scope national
+```
+
+**Pattern Implementation**:
+
+All analysis/visualization scripts follow this structure:
+
+```python
+def visualize_state_xxx(state_dir, state_code, census_year, dpi=150):
+    """Visualize for a single state."""
+    # Load ONLY this state's data
+    tracts = gpd.read_parquet(f'data/raw/{state_code.lower()}_tracts_{census_year}.parquet')
+    analysis = pd.read_csv(state_dir / 'xxx_analysis' / 'district_xxx.csv')
+
+    # Create visualizations
+    create_map(tracts, analysis, output_dir / 'xxx_map.png', dpi)
+    return 0
+
+def visualize_national_xxx(output_dir, version, census_year, dpi=150, position=-1):
+    """Aggregate all states into national visualization."""
+    # Load ALL states
+    for state_name in ALL_STATES:
+        state_dir = output_dir / 'states' / state_name
+        # Load state data and append to list
+
+    # Concatenate and visualize
+    us_data = pd.concat(all_state_data)
+    create_national_map(us_data, output_dir / 'us_national_xxx.png', dpi)
+    return 0
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scope', choices=['state', 'national'], default='national')
+
+    # State scope arguments
+    parser.add_argument('--state', help='State code (required if scope=state)')
+    parser.add_argument('--state-dir', help='State directory (required if scope=state)')
+
+    # National scope arguments
+    parser.add_argument('--output-dir', help='Base output directory (required if scope=national)')
+    parser.add_argument('--version', help='Version (required if scope=national)')
+
+    # Common arguments
+    parser.add_argument('--census-year', default='2020', choices=['2020', '2010'])
+    parser.add_argument('--dpi', type=int, default=150)
+    parser.add_argument('--force', action='store_true')
+    parser.add_argument('--position', type=int, default=-1)
+
+    args = parser.parse_args()
+
+    if args.scope == 'state':
+        if not args.state or not args.state_dir:
+            parser.error("--state and --state-dir required when scope=state")
+        return visualize_state_xxx(args.state_dir, args.state, args.census_year, args.dpi)
+
+    elif args.scope == 'national':
+        if not args.output_dir or not args.version:
+            parser.error("--output-dir and --version required when scope=national")
+        return visualize_national_xxx(args.output_dir, args.version, args.census_year,
+                                     args.dpi, args.position)
+```
+
+**Adding New Analysis**:
+
+To add a new analysis type:
+
+1. **Create analysis script** (`scripts/xxx/analyze_xxx.py`):
+   ```python
+   # Takes state_dir as input
+   # Outputs: state_dir / 'xxx_analysis' / 'district_xxx.csv'
+   ```
+
+2. **Create visualization script** (`scripts/xxx/visualize_xxx.py`):
+   ```python
+   # Implements visualize_state_xxx() and visualize_national_xxx()
+   # Follows scope-based pattern above
+   ```
+
+3. **Add to per-state pipeline** (`process_single_state.py`):
+   ```python
+   if args.run_analysis:
+       steps.append((
+           "XXX analysis",
+           f'{sys.executable} {xxx_analyze} {state_dir} --census-year {args.year}'
+       ))
+       steps.append((
+           "XXX visualization",
+           f'{sys.executable} {xxx_visualize} --scope state --state {state_code} '
+           f'--state-dir {state_dir} --census-year {args.year} --dpi {args.dpi}'
+       ))
+   ```
+
+4. **Add to post-processing** (`run_complete_redistricting.py`):
+   ```python
+   pipeline_steps.append({
+       'name': 'Create national XXX map',
+       'command': f'{sys.executable} scripts/xxx/visualize_xxx.py --scope national '
+                  f'--output-dir {output_dir} --version {args.version} '
+                  f'--census-year {args.year} --dpi {args.dpi}'
+   })
+   ```
+
+**Benefits**:
+- Per-state runs in parallel (saves 1-2 hours on full pipeline)
+- National map only created once (aggregates per-state results)
+- Incremental: Can re-run national without re-analyzing all states
+- Consistent: Same code path for state and national
+
+**Implemented in**:
+- ✅ Compactness (`scripts/compactness/visualize_compactness.py`)
+- ✅ Political (`scripts/political/visualize_partisan_lean.py`)
+- ✅ Demographic (`scripts/demographic/visualize_district_demographics.py`)
+
 ---
 
 ## Scalability
