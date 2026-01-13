@@ -1,12 +1,12 @@
 \section{Political Characteristics and Partisan Neutrality}
 \label{sec:analysis}
 
-\textbf{A critical design principle}: The algorithm has \textit{zero knowledge} of voting patterns, party affiliation, or electoral outcomes. Political data is not an input to the boundary-drawing process. The recursive bisection algorithm sees only two things: census tract populations and geographic adjacency. It cannot gerrymander because it cannot see what it would need to manipulate.
+\textbf{A critical design principle}: The algorithm has \textit{zero knowledge} of voting patterns, party affiliation, or electoral outcomes. Political data is not an input to the boundary-drawing process. The recursive bisection algorithm sees only two things: census tract populations and geographic adjacency. It cannot engage in intentional partisan gerrymandering because it cannot see partisan data.
 
-This section analyzes the partisan characteristics that emerge when we overlay election results onto the completed districts \textit{after} boundaries are drawn. Any partisan patterns in the results reflect underlying political geography, not algorithmic manipulation. The algorithm's inherent blindness to politics makes gerrymandering structurally impossible.
+This section analyzes the partisan characteristics that emerge when we overlay election results onto the completed districts \textit{after} boundaries are drawn. Any partisan patterns in the results reflect underlying political geography combined with the compactness optimization, not intentional manipulation.
 \subsection{Political Lean Distribution}
 
-We overlay 2020 presidential election results onto the algorithmically-generated districts to assess partisan characteristics \cite{ansolabehere2012mecubed}. For each district, we calculate the Democratic margin (Biden vote share minus Trump vote share) and classify districts into five categories:
+We overlay 2020 presidential election results onto the algorithmically-generated districts to assess partisan characteristics \cite{medsl2020}. For each district, we calculate the Democratic margin (Biden vote share minus Trump vote share) and classify districts into five categories:
 
 \begin{itemize}
     \item \textbf{Strong Democrat:} Democratic margin $> +15\%$

@@ -6,9 +6,9 @@ This section examines the advantages and limitations of algorithmic redistrictin
 
 Our recursive bisection approach offers several distinct advantages over traditional redistricting methods:
 
-\textbf{Structural Impossibility of Gerrymandering:} The algorithm cannot see political data, making partisan manipulation structurally impossible rather than merely prohibited. This provides stronger protection than human-drawn maps subject to "independent" oversight, where political knowledge inevitably influences decisions even when mapmakers attempt impartiality.
+\textbf{No Direct Partisan Intent:} The algorithm uses only population and adjacency data as inputs—it cannot access voter registration, election results, or demographic proxies for partisanship. This eliminates direct partisan manipulation. However, we acknowledge that edge-cut minimization and compactness optimization are not neutral with respect to political outcomes: compact districts systematically disadvantage geographically dispersed populations. The method prevents intentional gerrymandering but cannot eliminate all political effects arising from geographic voter sorting.
 
-\textbf{Complete Reproducibility:} Given identical input data (census tract populations and adjacencies), the algorithm produces identical districts every time. Anyone can verify the results by re-running the algorithm. This transparency eliminates disputes about whether the process was conducted fairly.
+\textbf{High Reproducibility:} Given identical input data (census tract populations and adjacencies) and METIS configuration, the algorithm produces highly consistent results. While we do not currently fix METIS's internal random seed, multiple runs show variations under 1\% in compactness metrics. Perfect determinism requires specifying all random seeds, which we leave for operational deployment. The core advantage is transparency: anyone can re-run the algorithm and verify results, unlike opaque political negotiations.
 
 \textbf{Objectivity and Uniformity:} The same algorithmic procedure applies to all states, census tracts, and geographic regions. No state receives special treatment, no community is intentionally favored or disfavored, and no partisan consideration influences any boundary decision.
 
@@ -72,4 +72,4 @@ But algorithmic redistricting eliminates the most pernicious aspect of current p
 
 If the goal is restoring public confidence that electoral districts serve citizens rather than politicians, mathematical objectivity offers the most promising path forward. Eighty years of Huntington-Hill success demonstrate that when political stakes are high, removing human discretion through mathematical rigor can transform intractable conflicts into settled policy.
 
-The question is not whether algorithmic redistricting is perfect, but whether it is better than the alternatives. On the dimensions that matter most—objectivity, reproducibility, transparency, and structural immunity to manipulation—the case is compelling.
+The question is not whether algorithmic redistricting is perfect, but whether it is better than the alternatives. On the dimensions that matter most—objectivity, reproducibility, transparency, and elimination of direct partisan manipulation—the case is compelling.

@@ -63,7 +63,18 @@ Even district counts (e.g., $8 = 2^3$) create equal-sized partitions at each lev
 
 \subsection{Implementation}
 
-METIS is configured for recursive bisection with edge-cut minimization and 1\% population balance constraint. Runs are deterministic given a fixed random seed. We process all 50 states independently, loading 2020 Census tract geometries \cite{census2020redistricting}, constructing adjacency graphs with water-based edges for islands, and applying recursive bisection. Processing requires approximately 2-3 hours on commodity hardware with 4-8 parallel workers.
+METIS is invoked with the following parameters for each bisection:
+\begin{itemize}
+    \item \texttt{-contig}: Enforce geographic contiguity (critical for valid districts)
+    \item \texttt{-minconn}: Minimize subdomain connectivity (reduce edge cuts)
+    \item \texttt{-ufactor=1.005}: Limit population imbalance to 0.5\% per partition
+    \item \texttt{-niter=100}: Set refinement iterations to 100 (default is 10)
+    \item \texttt{-tpwgt}: Target partition weights for unequal splits (odd district counts)
+\end{itemize}
+
+We do not explicitly set a random seed, relying on METIS's default behavior. While this means runs are not perfectly deterministic, we observe stable results across multiple executions with variations typically under 1\% in compactness metrics. Full reproducibility would require fixing METIS's internal random seed via the \texttt{-seed} parameter, which we leave for future work.
+
+We process all 50 states independently, loading 2020 Census tract geometries \cite{census2020redistricting}, constructing adjacency graphs with water-based edges for islands, and applying recursive bisection. Processing requires approximately 2-3 hours on commodity hardware with 4-8 parallel workers.
 
 \subsection{Design Choices}
 

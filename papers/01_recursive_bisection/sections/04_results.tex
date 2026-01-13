@@ -36,7 +36,7 @@ These results demonstrate that recursive bisection produces highly balanced dist
 The distribution shows most districts clustered near ideal population, with 86\% within $\pm$5\%. Larger deviations occur primarily in small states where census tract granularity limits perfect balance. For example, Wyoming's single at-large district necessarily matches the state's total population, creating a fixed deviation from the national ideal.
 \subsection{Example: Even Division (Minnesota, 8 Districts)}
 
-Figure~\ref{fig:minnesota_rounds} demonstrates recursive bisection on Minnesota, where even division creates equal-sized partitions at each round. The algorithm achieves strong population balance (mean deviation 1.21\%, all districts within $\pm$3\%) and high compactness (mean Polsby-Popper 0.286). These results are comparable to Minnesota's court-ordered 2022 redistricting plan, which achieved near-perfect population equality (maximum deviation of 1 person) and a compactness score of 0.32—placing it among the top 6\% of simulated alternatives nationwide \\cite{alarm2022minnesota}.
+Figure~\ref{fig:minnesota_rounds} demonstrates recursive bisection on Minnesota, where even division creates equal-sized partitions at each round. The algorithm achieves strong population balance (mean deviation 1.21\%, all districts within $\pm$3\%) and high compactness (mean Polsby-Popper 0.286). These results are comparable to Minnesota's court-ordered 2022 redistricting plan, which achieved near-perfect population equality (maximum deviation of 1 person) and a compactness score of 0.32—placing it among the top 6\% of simulated alternatives nationwide \cite{alarm2022minnesota}.
 
 \begin{figure*}[t]
 \centering
@@ -59,7 +59,7 @@ Figure~\ref{fig:minnesota_rounds} demonstrates recursive bisection on Minnesota,
 \end{figure*}
 \subsection{Example: Odd Division (Alabama, 7 Districts)}
 
-Figure~\ref{fig:alabama_rounds} shows Alabama's odd-division case. Unlike Minnesota, later rounds create unequal-sized partitions—some regions will become more districts than others. The algorithm achieves strong population balance (mean deviation 2.14\%, all districts within $\pm$5\%) and good compactness (mean Polsby-Popper 0.215). This compactness matches Alabama's 2021 enacted plan (Polsby-Popper 0.222), which was later struck down under the Voting Rights Act. Expert testimony in \\textit{Allen v. Milligan} demonstrated that alternative plans could achieve higher compactness (0.25--0.28) while also satisfying VRA requirements \\cite{duchin2022alabama}.
+Figure~\ref{fig:alabama_rounds} shows Alabama's odd-division case. Unlike Minnesota, later rounds create unequal-sized partitions—some regions will become more districts than others. The algorithm achieves strong population balance (mean deviation 2.14\%, all districts within $\pm$5\%) and good compactness (mean Polsby-Popper 0.215). This compactness matches Alabama's 2021 enacted plan (Polsby-Popper 0.222), which was later struck down under the Voting Rights Act. Expert testimony in \textit{Allen v. Milligan} demonstrated that alternative plans could achieve higher compactness (0.25--0.28) while also satisfying VRA requirements \cite{duchin2022alabama}.
 
 \begin{figure*}[t]
 \centering
