@@ -23,6 +23,8 @@ def main():
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--run-analysis', action='store_true',
                        help='Run per-state analysis (compactness, political, demographic)')
+    parser.add_argument('--partition-mode', type=str, default='normal', choices=['normal', 'edge-weighted'],
+                       help='Partitioning mode: "normal" (edge cut minimization) or "edge-weighted" (boundary length minimization)')
     args = parser.parse_args()
 
     state_code = args.state.upper()
@@ -75,6 +77,8 @@ def main():
     if args.debug:
         flags.append('--debug')
     flags.append(f'--dpi {args.dpi}')
+    if args.partition_mode != 'normal':
+        flags.append(f'--partition-mode {args.partition_mode}')
     flags_str = ' '.join(flags)
 
     # In parallel mode, suppress child progress bars (use position 999)

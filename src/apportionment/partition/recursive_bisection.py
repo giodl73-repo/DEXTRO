@@ -4,12 +4,50 @@ Recursive bifurcation algorithm for redistricting.
 Implements recursive splitting using METIS gpmetis to create equal-population districts.
 """
 
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set, Optional, Tuple
 
 import numpy as np
 from tqdm import tqdm
 
 from .metis_wrapper import partition_graph
+
+
+def _extract_subgraph_edge_weights(
+    edge_weights: Optional[Dict[Tuple[int, int], float]],
+    block_indices: Set[int],
+    global_to_local: Dict[int, int]
+) -> Optional[Dict[Tuple[int, int], float]]:
+    """
+    Extract edge weights for subgraph from global edge weights.
+
+    Parameters
+    ----------
+    edge_weights : dict or None
+        Global edge weights mapping (i, j) to weight
+    block_indices : set
+        Block indices in this subgraph
+    global_to_local : dict
+        Mapping from global to local indices
+
+    Returns
+    -------
+    dict or None
+        Subgraph edge weights with local indices, or None if no global weights
+    """
+    if edge_weights is None:
+        return None
+
+    subgraph_edge_weights = {}
+    for (i, j), weight in edge_weights.items():
+        # Check if both nodes are in the subgraph
+        if i in block_indices and j in block_indices:
+            local_i = global_to_local[i]
+            local_j = global_to_local[j]
+            # Store with canonical ordering (smaller index first)
+            key = (min(local_i, local_j), max(local_i, local_j))
+            subgraph_edge_weights[key] = weight
+
+    return subgraph_edge_weights
 
 
 def _split_node_worker(task: dict) -> dict:
@@ -36,6 +74,7 @@ def _split_node_worker(task: dict) -> dict:
     adjacency = task['adjacency']
     vertex_weights = task['vertex_weights']
     debug = task['debug']
+    edge_weights = task.get('edge_weights', None)
 
     k = target_districts
 
@@ -63,6 +102,9 @@ def _split_node_worker(task: dict) -> dict:
 
     subgraph_weights = np.array([vertex_weights[i] for i in block_mapping], dtype=np.int32)
 
+    # Extract subgraph edge weights
+    subgraph_edge_weights = _extract_subgraph_edge_weights(edge_weights, block_indices, global_to_local)
+
     # Calculate target weights
     target_weights = [k_left / k, k_right / k]
 
@@ -84,7 +126,8 @@ def _split_node_worker(task: dict) -> dict:
         target_weights=target_weights,
         recursive=True,
         ufactor=ufactor,
-        debug=debug
+        debug=debug,
+        edge_weights=subgraph_edge_weights
     )
 
     # Create result
@@ -181,7 +224,8 @@ class RecursiveBisection:
         intermediate_dir: Optional[str] = None,
         state_code: str = "",
         tqdm_position: int = 0,
-        debug: bool = False
+        debug: bool = False,
+        edge_weights: Optional[Dict[Tuple[int, int], float]] = None
     ):
         """
         Initialize recursive bisection algorithm.
@@ -202,6 +246,8 @@ class RecursiveBisection:
             State code for region naming (e.g., "CA")
         debug : bool, default False
             Print detailed statistics and progress messages
+        edge_weights : dict, optional
+            Dictionary mapping (i, j) tuples to edge weights (boundary lengths in meters)
         """
         self.adjacency = adjacency
         self.vertex_weights = vertex_weights
@@ -213,6 +259,7 @@ class RecursiveBisection:
         self.state_code = state_code
         self.tqdm_position = tqdm_position
         self.debug = debug
+        self.edge_weights = edge_weights
 
         # Track intermediate results by depth
         self.intermediate_results = {}  # depth -> assignments dict
@@ -346,6 +393,10 @@ class RecursiveBisection:
         # Create subgraph for this node's blocks
         subgraph_adj, subgraph_weights, block_mapping = self._create_subgraph(node.block_indices)
 
+        # Extract subgraph edge weights
+        global_to_local = {global_idx: local_idx for local_idx, global_idx in enumerate(block_mapping)}
+        subgraph_edge_weights = _extract_subgraph_edge_weights(self.edge_weights, node.block_indices, global_to_local)
+
         # Calculate target weights for METIS
         # Left partition should get k_left/k of total population
         # Right partition should get k_right/k of total population
@@ -374,7 +425,8 @@ class RecursiveBisection:
                 target_weights=target_weights,
                 recursive=True,
                 ufactor=ufactor,
-                debug=self.debug
+                debug=self.debug,
+                edge_weights=subgraph_edge_weights
             )
         except Exception as e:
             raise RuntimeError(
@@ -498,7 +550,8 @@ class RecursiveBisection:
                 'state_code': node.state_code,
                 'adjacency': self.adjacency,
                 'vertex_weights': self.vertex_weights,
-                'debug': self.debug
+                'debug': self.debug,
+                'edge_weights': self.edge_weights
             }
             split_tasks.append((node, task))
 
@@ -585,6 +638,10 @@ class RecursiveBisection:
         # Create subgraph for this node's blocks
         subgraph_adj, subgraph_weights, block_mapping = self._create_subgraph(node.block_indices)
 
+        # Extract subgraph edge weights
+        global_to_local = {global_idx: local_idx for local_idx, global_idx in enumerate(block_mapping)}
+        subgraph_edge_weights = _extract_subgraph_edge_weights(self.edge_weights, node.block_indices, global_to_local)
+
         # Calculate target weights for METIS
         target_weights = [k_left / k, k_right / k]
 
@@ -607,7 +664,8 @@ class RecursiveBisection:
                 target_weights=target_weights,
                 recursive=True,
                 ufactor=ufactor,
-                debug=self.debug
+                debug=self.debug,
+                edge_weights=subgraph_edge_weights
             )
         except Exception as e:
             raise RuntimeError(

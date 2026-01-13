@@ -153,6 +153,16 @@ def run_state_redistricting(state_code: str, state_config: dict, year: str = '20
     vertex_weights = graph_data['vertex_weights']
     index_to_geoid = graph_data['index_to_geoid']
 
+    # Load edge weights if using edge-weighted mode
+    edge_weights = None
+    if args.partition_mode == 'edge-weighted':
+        edge_weights = graph_data.get('edge_weights', None)
+        if edge_weights is None:
+            print(f"WARNING: --partition-mode edge-weighted specified but no edge_weights in graph file!")
+            print(f"         Run: python scripts/data/geography/build_tract_adjacency.py --state {state_code} --year {args.year} --compute-boundary-lengths")
+            print(f"         Falling back to normal mode (edge cut minimization)")
+            args.partition_mode = 'normal'
+
     total_pop = int(vertex_weights.sum())
 
     if load_pbar:
@@ -170,7 +180,8 @@ def run_state_redistricting(state_code: str, state_config: dict, year: str = '20
         intermediate_dir=str(output_dir / 'intermediate'),
         state_code=state_code,
         tqdm_position=tqdm_pos,
-        debug=debug
+        debug=debug,
+        edge_weights=edge_weights
     )
 
     # Run the algorithm
@@ -291,6 +302,8 @@ if __name__ == '__main__':
                        help='Enable debug mode with progress delays and file display')
     parser.add_argument('--reset', action='store_true',
                        help='Delete output directory before starting (fresh run, not incremental)')
+    parser.add_argument('--partition-mode', type=str, default='normal', choices=['normal', 'edge-weighted'],
+                       help='Partitioning mode: "normal" (edge cut minimization) or "edge-weighted" (boundary length minimization for better compactness)')
 
     args = parser.parse_args()
 

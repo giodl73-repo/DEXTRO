@@ -90,7 +90,8 @@ def check_prerequisites(state_code, year='2020'):
 
 
 def process_state_sequential(state_code, us_dir, state_config, year='2020', skip_existing=True,
-                             print_only=False, debug=False, position=1, dpi=150, run_analysis=True):
+                             print_only=False, debug=False, position=1, dpi=150, run_analysis=True,
+                             partition_mode='normal'):
     """
     Process a single state through the full pipeline (sequential mode).
     Uses ONLY 1 progress bar at the specified position.
@@ -142,6 +143,8 @@ def process_state_sequential(state_code, us_dir, state_config, year='2020', skip
     if debug:
         flags.append('--debug')
     flags.append(f'--dpi {dpi}')
+    if partition_mode != 'normal':
+        flags.append(f'--partition-mode {partition_mode}')
     flags_str = ' '.join(flags)
 
     # Pipeline steps - pass position 999 to hide child progress bars
@@ -308,6 +311,8 @@ def main():
                         help='Print commands without executing (debug mode)')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug mode with progress delays')
+    parser.add_argument('--partition-mode', type=str, default='normal', choices=['normal', 'edge-weighted'],
+                        help='Partitioning mode: "normal" (edge cut minimization) or "edge-weighted" (boundary length minimization)')
     parser.add_argument('states', nargs='*',
                         help='Specific state codes to process (default: all states)')
     args = parser.parse_args()
@@ -339,7 +344,8 @@ def main():
     if args.output_dir:
         output_dir = Path(args.output_dir)
     else:
-        output_dir = Path(f'outputs/us_{args.year}_{args.version}')
+        version_str = f'{args.version}_edge' if args.partition_mode == 'edge-weighted' else args.version
+        output_dir = Path(f'outputs/us_{args.year}_{version_str}')
 
     # Handle --reset flag: delete output directory for fresh run
     if args.reset and output_dir.exists() and not args.print_only:
@@ -461,7 +467,8 @@ def main():
                         debug=args.debug,
                         position=1,
                         dpi=args.dpi,
-                        run_analysis=args.run_analysis
+                        run_analysis=args.run_analysis,
+                        partition_mode=args.partition_mode
                     )
 
                     if success:
@@ -530,6 +537,8 @@ def main():
                     flags.append('--debug')
                 if args.run_analysis:
                     flags.append('--run-analysis')
+                if args.partition_mode != 'normal':
+                    flags.append(f'--partition-mode {args.partition_mode}')
                 flags_str = ' '.join(flags)
 
                 cmd = f'{sys.executable} {scripts_dir}/process_single_state.py --state {state_code} --year {args.year} --output-dir {state_dir} --position {position} --dpi {args.dpi} {flags_str}'.strip()
