@@ -321,13 +321,6 @@ def create_district_maps(
         for district_id in range(1, num_districts + 1)
     ]
 
-    # Use ProcessPoolExecutor for parallel map creation
-    # But run serially if we're already in parallel mode (avoid nested parallelism on Windows)
-    if os.environ.get('PARALLEL_MODE'):
-        max_workers = 1
-    else:
-        max_workers = min(4, multiprocessing.cpu_count())
-
     # Use passed-in progress bar if available, otherwise create a new one (but not if position==999)
     if progress_bar:
         pbar = progress_bar
@@ -347,13 +340,14 @@ def create_district_maps(
         pbar = pbar_context
 
     try:
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(create_single_district_map, task) for task in tasks]
-
+        # When in PARALLEL_MODE, run sequentially to avoid nested parallelism overhead
+        # Otherwise use ProcessPoolExecutor for parallel map creation
+        if os.environ.get('PARALLEL_MODE'):
+            # Sequential execution in main process (avoid multiprocessing overhead)
             completed = 0
-            for future in as_completed(futures):
+            for task in tasks:
                 try:
-                    district_id = future.result()
+                    district_id = create_single_district_map(task)
                     completed += 1
                     pbar.update(1)
                     # Print progress for parent process to read
@@ -366,6 +360,28 @@ def create_district_maps(
                     pbar.update(1)
                     if position == 999:
                         print(f"PROGRESS:{completed}/{num_districts}", flush=True)
+        else:
+            # Parallel execution with ProcessPoolExecutor
+            max_workers = min(4, multiprocessing.cpu_count())
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(create_single_district_map, task) for task in tasks]
+
+                completed = 0
+                for future in as_completed(futures):
+                    try:
+                        district_id = future.result()
+                        completed += 1
+                        pbar.update(1)
+                        # Print progress for parent process to read
+                        if position == 999:
+                            print(f"PROGRESS:{completed}/{num_districts}", flush=True)
+                    except Exception as e:
+                        completed += 1
+                        if debug:
+                            print(f"Error creating map for district: {e}")
+                        pbar.update(1)
+                        if position == 999:
+                            print(f"PROGRESS:{completed}/{num_districts}", flush=True)
     finally:
         # Only close if we created it (not passed-in progress_bar)
         if pbar_context:

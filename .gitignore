@@ -138,6 +138,16 @@ $RECYCLE.BIN/
 *.tmp
 *.temp
 *.log
+tmpclaude-*-cwd
+
+# LaTeX compilation artifacts
+*.aux
+*.bbl
+*.blg
+*.out
+*.toc
+*.lof
+*.lot
 
 # METIS executable (large binary - should be downloaded separately)
 # Uncomment if METIS is in the repo

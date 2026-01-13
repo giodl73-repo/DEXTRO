@@ -338,13 +338,6 @@ def main():
         for metadata_file in round_files
     ]
 
-    # Use ProcessPoolExecutor for parallel visualization
-    # But run serially if we're already in parallel mode (avoid nested parallelism on Windows)
-    if os.environ.get('PARALLEL_MODE'):
-        max_workers = 1
-    else:
-        max_workers = min(4, multiprocessing.cpu_count())
-
     # Use stage_pbar if it exists, otherwise create a new one (but not if position==999)
     if stage_pbar:
         pbar = stage_pbar
@@ -362,13 +355,14 @@ def main():
                     ncols=100)
 
     try:
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(visualize_single_round, task) for task in tasks]
-
+        # When in PARALLEL_MODE, run sequentially to avoid nested parallelism overhead
+        # Otherwise use ProcessPoolExecutor for parallel visualization
+        if os.environ.get('PARALLEL_MODE'):
+            # Sequential execution in main process (avoid multiprocessing overhead)
             completed = 0
-            for future in as_completed(futures):
+            for task in tasks:
                 try:
-                    round_num = future.result()
+                    round_num = visualize_single_round(task)
                     if round_num is None:
                         pass  # Skip incomplete round
                     completed += 1
@@ -381,6 +375,28 @@ def main():
                     pbar.update(1)
                     if args.position == 999:
                         print(f"PROGRESS:{completed}/{len(tasks)}", flush=True)
+        else:
+            # Parallel execution with ProcessPoolExecutor
+            max_workers = min(4, multiprocessing.cpu_count())
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(visualize_single_round, task) for task in tasks]
+
+                completed = 0
+                for future in as_completed(futures):
+                    try:
+                        round_num = future.result()
+                        if round_num is None:
+                            pass  # Skip incomplete round
+                        completed += 1
+                        pbar.update(1)
+                        # Print progress for parent process to read
+                        if args.position == 999:
+                            print(f"PROGRESS:{completed}/{len(tasks)}", flush=True)
+                    except Exception as e:
+                        completed += 1
+                        pbar.update(1)
+                        if args.position == 999:
+                            print(f"PROGRESS:{completed}/{len(tasks)}", flush=True)
     finally:
         # Only close if we created it (not stage_pbar)
         if not stage_pbar:

@@ -388,18 +388,21 @@
         <div class="header">
             <h1>🗺️ Algorithmic Redistricting Dashboard</h1>
             <div class="header-controls">
-                <select class="header-select" id="yearSelect" onchange="switchYear()">
-                    <option value="2020" selected>📅 2020 Census</option>
-                    <option value="2030">📅 2030 Census</option>
-                    <option value="2040">📅 2040 Census</option>
-                </select>
-                <select class="header-select" id="versionSelect" onchange="switchVersion()">
-                    <option value="v1" selected>🔖 Version 1</option>
-                    <option value="v2">🔖 Version 2</option>
-                    <option value="v3">🔖 Version 3</option>
-                </select>
+                <div class="dropdown" style="position: relative; display: inline-block;">
+                    <button class="header-select" onclick="togglePapersMenu()" style="cursor: pointer; padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background: white;">
+                        📄 Research Papers
+                    </button>
+                    <div id="papersMenu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 1000; margin-top: 4px; min-width: 300px;">
+                        <a href="../papers/01_recursive_bisection/recursive_bisection.pdf" target="_blank" style="display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">
+                            <strong>Paper 1:</strong> Recursive Bisection for Congressional Redistricting
+                        </a>
+                        <a href="../papers/02_edge_weighted_bisection/edge_weighted_bisection.pdf" target="_blank" style="display: block; padding: 12px 16px; text-decoration: none; color: #333;">
+                            <strong>Paper 2:</strong> Edge-Weighted Recursive Bisection
+                        </a>
+                    </div>
+                </div>
                 <div class="header-info">
-                    435 Districts | 50 States
+                    📅 2020 Census | 435 Districts | 50 States
                 </div>
             </div>
         </div>
@@ -500,19 +503,20 @@
             window.location.hash = `us_${currentYear}_${currentVersion}`;
         }
 
-        // Switch year
-        function switchYear() {
-            currentYear = document.getElementById('yearSelect').value;
-            updateHash();
-            if (currentState) loadContent();
+        // Toggle research papers dropdown menu
+        function togglePapersMenu() {
+            const menu = document.getElementById('papersMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Switch version
-        function switchVersion() {
-            currentVersion = document.getElementById('versionSelect').value;
-            updateHash();
-            if (currentState) loadContent();
-        }
+        // Close papers menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = event.target.closest('.dropdown');
+            const menu = document.getElementById('papersMenu');
+            if (!dropdown && menu) {
+                menu.style.display = 'none';
+            }
+        });
 
         // Get base path for current year/version
         function getBasePath() {

@@ -8,6 +8,8 @@ them to the district_summary.csv file.
 Metrics:
 - Polsby-Popper: 4π × area / perimeter² (range 0-1, 1 = perfect circle)
 - Reock: area / minimum_bounding_circle_area (range 0-1)
+- Convex Hull Ratio: area / convex_hull_area (range 0-1)
+- Perimeter: Total boundary length in kilometers
 
 Usage:
     python scripts/calculate_compactness_metrics.py <state_directory>
@@ -28,7 +30,7 @@ from shapely.geometry import Point
 
 def polsby_popper_score(geometry):
     """
-    Calculate Polsby-Popper compactness score.
+    Calculate Polsby-Popper compactness score and perimeter.
 
     Formula: 4π × area / perimeter²
     Range: 0 to 1, where 1 is a perfect circle
@@ -40,17 +42,17 @@ def polsby_popper_score(geometry):
 
     Returns
     -------
-    float
-        Polsby-Popper score
+    tuple (float, float)
+        Polsby-Popper score and perimeter in meters
     """
     area = geometry.area
     perimeter = geometry.length
 
     if perimeter == 0:
-        return 0.0
+        return 0.0, 0.0
 
     score = (4 * np.pi * area) / (perimeter ** 2)
-    return min(1.0, score)  # Cap at 1.0 due to numerical precision
+    return min(1.0, score), perimeter  # Cap score at 1.0 due to numerical precision
 
 
 def minimum_bounding_circle(geometry):
@@ -195,6 +197,14 @@ def calculate_metrics_for_state(state_dir):
     print(f"Loading tract geometries from {tracts_file.name}...")
     tracts_gdf = gpd.read_parquet(tracts_file)
     print(f"  Loaded {len(tracts_gdf):,} tracts")
+    print(f"  Original CRS: {tracts_gdf.crs}")
+
+    # Reproject to Albers Equal Area (EPSG:5070) for accurate area/perimeter in meters
+    # This is the standard projection for US-wide analysis
+    if tracts_gdf.crs != 'EPSG:5070':
+        print(f"  Reprojecting to EPSG:5070 (Albers Equal Area) for metric calculations...")
+        tracts_gdf = tracts_gdf.to_crs('EPSG:5070')
+        print(f"  Reprojected CRS: {tracts_gdf.crs}")
 
     # Load district assignments
     assignments_file = state_dir / 'final_assignments.pkl'
@@ -231,18 +241,22 @@ def calculate_metrics_for_state(state_dir):
         district_geom = unary_union(district_tracts.geometry)
 
         # Calculate metrics
-        pp_score = polsby_popper_score(district_geom)
+        pp_score, perimeter_m = polsby_popper_score(district_geom)
         reock = reock_score(district_geom)
         convex_ratio = convex_hull_ratio(district_geom)
+
+        # Convert perimeter from meters to kilometers
+        perimeter_km = perimeter_m / 1000.0
 
         metrics_data.append({
             'district': district_id,
             'polsby_popper': round(pp_score, 4),
             'reock': round(reock, 4),
-            'convex_hull_ratio': round(convex_ratio, 4)
+            'convex_hull_ratio': round(convex_ratio, 4),
+            'perimeter_km': round(perimeter_km, 2)
         })
 
-        print(f"PP={pp_score:.4f}, Reock={reock:.4f}, Convex={convex_ratio:.4f}")
+        print(f"PP={pp_score:.4f}, Reock={reock:.4f}, Convex={convex_ratio:.4f}, Perim={perimeter_km:.2f}km")
 
     # Create metrics dataframe
     metrics_df = pd.DataFrame(metrics_data)
@@ -261,7 +275,7 @@ def calculate_metrics_for_state(state_dir):
         summary_df = pd.read_csv(summary_file)
 
         # Drop existing compactness columns if they exist (to avoid duplicates)
-        compactness_cols = ['polsby_popper', 'reock', 'convex_hull_ratio']
+        compactness_cols = ['polsby_popper', 'reock', 'convex_hull_ratio', 'perimeter_km']
         for col in compactness_cols:
             if col in summary_df.columns:
                 summary_df = summary_df.drop(columns=[col])
@@ -294,6 +308,13 @@ def calculate_metrics_for_state(state_dir):
     print(f"  Median: {metrics_df['convex_hull_ratio'].median():.4f}")
     print(f"  Min:    {metrics_df['convex_hull_ratio'].min():.4f}")
     print(f"  Max:    {metrics_df['convex_hull_ratio'].max():.4f}")
+
+    print(f"\nPerimeters (km):")
+    print(f"  Total:  {metrics_df['perimeter_km'].sum():.2f} km")
+    print(f"  Mean:   {metrics_df['perimeter_km'].mean():.2f} km")
+    print(f"  Median: {metrics_df['perimeter_km'].median():.2f} km")
+    print(f"  Min:    {metrics_df['perimeter_km'].min():.2f} km")
+    print(f"  Max:    {metrics_df['perimeter_km'].max():.2f} km")
 
     # Interpretation guide
     print(f"\n{'='*70}")
