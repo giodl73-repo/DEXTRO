@@ -616,6 +616,21 @@ def main():
 
     pipeline_steps = []
 
+    # Create US national maps FIRST (most important visualization)
+    national_map_script = scripts_dir / 'create_us_national_map.py'
+    if national_map_script.exists():
+        flags = []
+        if args.print_only:
+            flags.append('--print-only')
+        if args.debug:
+            flags.append('--debug')
+        flags_str = ' '.join(flags)
+        pipeline_steps.append({
+            'name': 'Create US national maps',
+            'command': f'{sys.executable} {scripts_dir}/create_us_national_map.py --year {args.year} --output-dir {output_dir} --dpi {args.dpi} {flags_str}'.strip(),
+            'critical': False
+        })
+
     # Create US aggregate files
     if output_dir.exists() or args.print_only:
         flags = []
@@ -650,21 +665,6 @@ def main():
         pipeline_steps.append({
             'name': 'Create national round progression maps',
             'command': f'{sys.executable} {national_rounds_script} --year {args.year} --version {args.version} --output-dir {output_dir} --dpi {args.dpi} --max-rounds 6'.strip(),
-            'critical': False
-        })
-
-    # Create US national maps
-    national_map_script = scripts_dir / 'create_us_national_map.py'
-    if national_map_script.exists():
-        flags = []
-        if args.print_only:
-            flags.append('--print-only')
-        if args.debug:
-            flags.append('--debug')
-        flags_str = ' '.join(flags)
-        pipeline_steps.append({
-            'name': 'Create US national maps',
-            'command': f'{sys.executable} {scripts_dir}/create_us_national_map.py --year {args.year} --output-dir {output_dir} --dpi {args.dpi} {flags_str}'.strip(),
             'critical': False
         })
 

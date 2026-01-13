@@ -94,9 +94,64 @@ for line in proc.stdout:
 
 ## Skip Logic Pattern
 
-### Standard Pattern
+### Critical Rules
 
-**All pipeline scripts should check for existing outputs and skip unless forced.**
+1. **ALWAYS implement per-stage skip logic** - Each script checks its own outputs
+2. **NEVER skip entire pipelines** - Let each stage decide if it needs to run
+3. **ALWAYS add --force flag** - Allow users to override skip logic
+4. **NEVER assume upstream outputs** - Always check if they exist first
+
+### Why Per-Stage Skip Logic?
+
+**Enables incremental updates**: When you add a new analysis stage (e.g., metro area maps), users can run the pipeline again and ONLY the new stage runs. Without per-stage skip logic, they'd have to reprocess everything or use complex flags.
+
+**Bad Example** (what we had before):
+```python
+# DON'T DO THIS - skips entire state if basic outputs exist
+if state_dir.exists():
+    required_files = [
+        state_dir / 'final_assignments.pkl',
+        state_dir / 'district_summary.csv',
+        state_dir / 'maps'
+    ]
+    if all(f.exists() for f in required_files):
+        print(f"{state_name} SKIPPED")
+        return True  # Skip entire state pipeline!
+```
+
+**Problem**: If you add metro maps later, states that already ran won't get metros generated.
+
+**Good Example** (per-stage skip):
+```python
+# DO THIS - each stage checks its own outputs
+def run_state_pipeline(state_code, state_dir):
+    # Stage 1: Redistricting
+    run_redistricting(state_code, state_dir)  # Checks for final_assignments.pkl
+
+    # Stage 2: Cities
+    add_cities(state_dir)  # Checks for district_cities.csv
+
+    # Stage 3: Summary
+    create_summary(state_dir)  # Checks for district_summary.csv
+
+    # Stage 4: Round maps
+    create_round_maps(state_dir)  # Checks for round_*.png files
+
+    # Stage 5: District maps
+    create_district_maps(state_dir)  # Checks for districts/*.png files
+
+    # Stage 6-10: Analysis (if enabled)
+    if run_analysis:
+        analyze_political(state_dir)  # Checks for political CSVs
+        visualize_political(state_dir)  # Checks for political maps
+        # ... etc for demographic, compactness, metros
+```
+
+**Benefit**: Adding stage 11 (metros) later? Re-run the pipeline and stages 1-10 skip instantly, only stage 11 runs.
+
+### Standard Per-Stage Pattern
+
+**Every pipeline script MUST implement this:**
 
 ```python
 def main():
@@ -112,9 +167,10 @@ def main():
         if is_standalone:
             print(f"Output already exists - skipping: {output_file}")
             print("Use --force to regenerate")
-        return 0
+        return 0  # Success - skipped
 
     # ... do work ...
+    return 0  # Success - completed
 ```
 
 ### Multiple Output Files
@@ -135,7 +191,22 @@ if not args.force and all(f.exists() for f in required_files):
     return 0
 ```
 
-**Why**: Prevents expensive re-computation, enables pipeline resumption after failures.
+### Return Codes
+
+**CRITICAL**: Always return 0 for success, even when skipping:
+```python
+# CORRECT
+if output_file.exists() and not args.force:
+    print("Skipping - already exists")
+    return 0  # Success!
+
+# WRONG
+if output_file.exists() and not args.force:
+    print("Skipping - already exists")
+    return None  # Parent thinks this failed!
+```
+
+**Why**: Prevents expensive re-computation, enables pipeline resumption after failures, **enables incremental updates when adding new stages**.
 
 ---
 
