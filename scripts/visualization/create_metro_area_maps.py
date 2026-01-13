@@ -65,6 +65,40 @@ TOP_METROS = {
 }
 
 
+def load_single_state_with_districts(state_code, state_dir, year='2020'):
+    """Load a single state with district assignments.
+
+    Args:
+        state_code: Two-letter state code (e.g., 'CA')
+        state_dir: Path to state output directory
+        year: Census year
+
+    Returns:
+        GeoDataFrame with tracts and district assignments
+    """
+    state_dir = Path(state_dir)
+    tracts_file = f'data/raw/{state_code.lower()}_tracts_{year}.parquet'
+    assignments_file = state_dir / 'final_assignments.pkl'
+
+    if not Path(tracts_file).exists():
+        raise FileNotFoundError(f"Tracts file not found: {tracts_file}")
+
+    tracts = gpd.read_parquet(tracts_file)
+
+    if assignments_file.exists():
+        with open(assignments_file, 'rb') as f:
+            assignments = pickle.load(f)
+        tracts['district'] = [assignments[i] for i in range(len(tracts))]
+    else:
+        # Single-district state
+        tracts['district'] = 1
+
+    tracts['state_code'] = state_code
+    tracts['state_name'] = STATE_CONFIG[state_code]['name']
+
+    return tracts
+
+
 def load_all_states_with_districts(us_dir, year='2020'):
     """Load all states with their district assignments."""
     us_dir = Path(us_dir)
@@ -274,6 +308,25 @@ def main():
         description='Create focused maps for major metro areas showing congressional districts'
     )
     parser.add_argument(
+        '--scope',
+        type=str,
+        default='all',
+        choices=['state', 'national', 'all'],
+        help='Scope: state (per-state metros), national (overview map), all (batch mode - legacy)'
+    )
+    parser.add_argument(
+        '--state',
+        type=str,
+        default=None,
+        help='State code (required when scope=state, e.g., CA, NY, TX)'
+    )
+    parser.add_argument(
+        '--state-dir',
+        type=str,
+        default=None,
+        help='State output directory (e.g., outputs/us_2020_v1/states/california)'
+    )
+    parser.add_argument(
         '--year',
         type=int,
         default=2020,
@@ -304,8 +357,22 @@ def main():
         default=None,
         help='Specific metros to generate (default: all top 20)'
     )
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Force regeneration even if outputs exist'
+    )
 
     args = parser.parse_args()
+
+    # Validate scope parameters
+    if args.scope == 'state':
+        if not args.state:
+            parser.error("--state required when scope=state")
+        args.state = args.state.upper()
+    elif args.scope == 'national':
+        if not args.output_dir or not args.version:
+            parser.error("--output-dir and --version required when scope=national")
 
     # Set output directory
     if args.output_dir:
@@ -322,10 +389,147 @@ def main():
         if send_status:
             print(f"STATUS:{position}:{msg}", flush=True)
 
+    #==========================================================================
+    # SCOPE: NATIONAL - No aggregation needed, metros created per-state
+    #==========================================================================
+    if args.scope == 'national':
+        report_progress("Metro maps complete (created per-state)")
+        if is_standalone:
+            print(f"\n{'='*80}")
+            print(f"National Metro Maps")
+            print(f"{'='*80}")
+            print("Metro area maps are created during per-state processing.")
+            print("No national aggregation map needed.")
+            print(f"View individual metro maps in web dashboard.")
+            print(f"{'='*80}\n")
+        return 0
+
+    #==========================================================================
+    # SCOPE: STATE - Process metros for single state
+    #==========================================================================
+    if args.scope == 'state':
+        # Check if this state has metros
+        if args.state not in TOP_METROS:
+            report_progress(f"{args.state} - No major metros (skipped)")
+            if is_standalone:
+                print(f"{args.state} has no major metropolitan areas in TOP_METROS list - skipping")
+            return 0
+
+        metros_list = TOP_METROS[args.state]
+        state_name = STATE_CONFIG[args.state]['name']
+
+        if is_standalone:
+            print(f"\n{'='*80}")
+            print(f"Creating Metro Area Maps for {state_name}")
+            print(f"{'='*80}")
+            print(f"Metros: {len(metros_list)}")
+            print(f"Year: {args.year}")
+            print(f"DPI: {args.dpi}")
+            print(f"{'='*80}\n")
+
+        # Determine state directory
+        if args.state_dir:
+            state_dir = Path(args.state_dir)
+        else:
+            state_dir = output_dir / 'states' / state_name.lower().replace(' ', '_')
+
+        # Load CBSA boundaries
+        cbsa_file = f'data/raw/us_cbsa_{args.year}.parquet'
+        if not Path(cbsa_file).exists():
+            print(f"ERROR: CBSA boundaries not found at {cbsa_file}")
+            print(f"Run: python scripts/data/geography/download_metro_boundaries.py --year {args.year}")
+            return 1
+
+        report_progress(f"{state_name} - Loading MSA boundaries")
+        cbsa_gdf = gpd.read_parquet(cbsa_file)
+        msa_gdf = cbsa_gdf[cbsa_gdf['LSAD'] == 'M1'].copy()
+
+        # Load state tracts and districts
+        report_progress(f"{state_name} - Loading tract data")
+        state_tracts = load_single_state_with_districts(args.state, state_dir, year=str(args.year))
+
+        # Load places data for this state
+        places_file = f'data/raw/{args.state.lower()}_places_{args.year}.parquet'
+        if Path(places_file).exists():
+            places_gdf = gpd.read_parquet(places_file)
+            places_gdf['state_code'] = args.state
+        else:
+            places_gdf = None
+
+        # Process metros for this state
+        total_metros = len(metros_list)
+        successful = 0
+        failed = 0
+
+        output_map_dir = state_dir / 'maps' / 'metros'
+
+        for idx, (metro_name, short_name) in enumerate(metros_list, 1):
+            output_file = output_map_dir / f"{short_name}.png"
+
+            # Skip if already exists (unless --force)
+            if output_file.exists() and not args.force:
+                successful += 1
+                if is_standalone:
+                    print(f"  [{idx}/{total_metros}] SKIP: {short_name} (already exists)")
+                continue
+
+            report_progress(f"{state_name} - Creating metro map ({idx}/{total_metros}): {short_name}")
+
+            # Find metro in MSA dataset
+            metro_match = msa_gdf[msa_gdf['NAME'] == metro_name]
+            if len(metro_match) == 0:
+                # Try partial match
+                metro_short = metro_name.split(',')[0]
+                metro_match = msa_gdf[msa_gdf['NAME'].str.startswith(metro_short)]
+
+            if len(metro_match) == 0:
+                print(f"  [{idx}/{total_metros}] ERROR: MSA not found: {metro_name}")
+                failed += 1
+                continue
+
+            metro_row = metro_match.iloc[0]
+            metro_geometry = metro_row.geometry
+
+            try:
+                success = create_metro_map(
+                    metro_name=metro_name,
+                    metro_geometry=metro_geometry,
+                    us_tracts=state_tracts,
+                    places_gdf=places_gdf,
+                    output_file=output_file,
+                    dpi=args.dpi
+                )
+
+                if success:
+                    successful += 1
+                    if is_standalone:
+                        print(f"  [{idx}/{total_metros}] OK: {short_name}")
+                else:
+                    failed += 1
+
+            except Exception as e:
+                print(f"  [{idx}/{total_metros}] ERROR creating {short_name}: {e}")
+                failed += 1
+
+        # Summary for state scope
+        if is_standalone:
+            print(f"\n{'='*80}")
+            print(f"Metro Maps Complete for {state_name}")
+            print(f"{'='*80}")
+            print(f"Total: {total_metros}, Successful: {successful}, Failed: {failed}")
+            print(f"Output: {output_map_dir}")
+            print(f"{'='*80}\n")
+
+        report_progress(f"{state_name} - Metro maps complete ({successful}/{total_metros})")
+        return 0 if failed == 0 else 1
+
+    #==========================================================================
+    # SCOPE: ALL (LEGACY BATCH MODE) - Process all metros
+    #==========================================================================
     # Banner
     if is_standalone:
         print(f"\n{'='*80}")
-        print(f"Creating Metro Area District Maps")
+        print(f"Creating Metro Area District Maps (Batch Mode)")
         print(f"{'='*80}")
         print(f"Year: {args.year}")
         print(f"Version: {args.version}")

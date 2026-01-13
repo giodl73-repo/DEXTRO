@@ -124,6 +124,13 @@ def main():
             f'{sys.executable} {compactness_script} --scope state --state {state_code} --state-dir {state_dir} --census-year {args.year} --dpi {args.dpi} --position {child_position}'.strip()
         ))
 
+        # Metro area visualization (if state has major metros)
+        metro_script = Path(__file__).parent.parent / 'visualization' / 'create_metro_area_maps.py'
+        steps.append((
+            "Metro area maps",
+            f'{sys.executable} {metro_script} --scope state --state {state_code} --state-dir {state_dir} --year {args.year} --dpi {args.dpi}'.strip()
+        ))
+
     # Set up environment for child processes (inherit PARALLEL_MODE)
     env = os.environ.copy()
     if 'PARALLEL_MODE' not in env:

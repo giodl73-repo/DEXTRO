@@ -804,12 +804,22 @@ def main():
         })
 
     # Create metro area maps for major MSAs
-    if output_dir.exists() or args.print_only:
+    if not args.run_analysis and (output_dir.exists() or args.print_only):
+        # Batch fallback mode (legacy) - only if --skip-analysis was used
         metro_viz_script = Path('scripts/visualization/create_metro_area_maps.py')
         if metro_viz_script.exists():
             pipeline_steps.append({
-                'name': 'Create metro area district maps',
-                'command': f'{sys.executable} {metro_viz_script} --year {args.year} --version {args.version} --output-dir {output_dir} --dpi {args.dpi}'.strip(),
+                'name': 'Create metro area district maps (batch fallback)',
+                'command': f'{sys.executable} {metro_viz_script} --scope all --year {args.year} --version {args.version} --output-dir {output_dir} --dpi {args.dpi}'.strip(),
+                'critical': False
+            })
+    elif args.run_analysis and (output_dir.exists() or args.print_only):
+        # Per-state mode - metros already created, just report completion
+        metro_viz_script = Path('scripts/visualization/create_metro_area_maps.py')
+        if metro_viz_script.exists():
+            pipeline_steps.append({
+                'name': 'Metro area maps (completed per-state)',
+                'command': f'{sys.executable} {metro_viz_script} --scope national --output-dir {output_dir} --version {args.version} --year {args.year}'.strip(),
                 'critical': False
             })
 
