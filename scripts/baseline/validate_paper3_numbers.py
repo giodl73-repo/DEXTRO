@@ -49,7 +49,9 @@ def aggregate_state_summaries(output_dir):
 
 def load_enacted_baseline(year):
     """Load enacted district compactness baseline."""
-    if year == '2010':
+    if year == '2000':
+        file = 'data/enacted_districts/2000/enacted_compactness_2000.csv'
+    elif year == '2010':
         file = 'data/enacted_districts/2010/enacted_compactness_2010.csv'
     elif year == '2020':
         # Check if we have the per-state files or aggregated file
@@ -58,9 +60,6 @@ def load_enacted_baseline(year):
             file = files[0]  # Use most recent
         else:
             return None, "No 2020 enacted baseline found"
-    elif year == '2000':
-        # To be implemented when 2000 baseline is downloaded
-        return None, "2000 enacted baseline not yet available"
     else:
         return None, f"Unknown year: {year}"
 
@@ -153,6 +152,11 @@ def main():
     print("="*70)
 
     results = []
+
+    # Validate 2000
+    result_2000 = compute_comparison('2000', 'outputs/us_2000_v1')
+    if result_2000:
+        results.append(result_2000)
 
     # Validate 2010
     result_2010 = compute_comparison('2010', 'outputs/us_2010_v1')
