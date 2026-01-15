@@ -574,12 +574,13 @@ import geopandas as gpd
 import warnings
 warnings.filterwarnings('ignore')
 
-# Try to load real census tract data
-tracts_file = Path(f'../../data/geography/nhgis_shapefiles_{args.year}/tracts/US_tract_{args.year}.shp')
+# Try to load real census tract data (Minnesota, FIPS 27)
+# Use 2010 data since it's available in the repository
+tracts_file = Path('../../data/geography/tiger_2010_tracts/tl_2010_27_tract10/tl_2010_27_tract10.shp')
 
 if not tracts_file.exists():
     print(f"  [WARNING] Census tracts shapefile not found at: {tracts_file}")
-    print(f"            Skipping real tracts figure")
+    print(f"            This is optional - skipping real tracts figure")
 else:
     try:
         # Load tracts
@@ -587,7 +588,8 @@ else:
 
         # Pick a small interesting cluster - let's use a few tracts from Hennepin County, MN (Minneapolis area)
         # This gives us urban tracts with interesting shapes
-        hennepin_tracts = tracts_gdf[tracts_gdf['GISJOIN'].str.startswith('G2700053')]
+        # FIPS for Hennepin County is 27053
+        hennepin_tracts = tracts_gdf[tracts_gdf['COUNTYFP10'] == '053']
 
         if len(hennepin_tracts) >= 6:
             # Take first 6 tracts for simplicity
