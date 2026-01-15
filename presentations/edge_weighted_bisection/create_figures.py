@@ -725,8 +725,11 @@ else:
             print(f"  Selected {n_tracts} contiguous tracts")
             print(f"  Cut edges: {len(cut_edges)}")
 
-            # Create figure with two subplots
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+            # Create figure with two subplots - give more space to left panel
+            fig = plt.figure(figsize=(16, 7))
+            gs = fig.add_gridspec(1, 2, width_ratios=[1.4, 1], wspace=0.15)
+            ax1 = fig.add_subplot(gs[0])
+            ax2 = fig.add_subplot(gs[1])
 
             # Left: Geographic tracts colored by partition
             ax1.set_title('Census Tracts + METIS Cut\n(Geographic Reality)', fontsize=12, fontweight='bold')
@@ -968,11 +971,6 @@ else:
                     transform=ax2.transAxes, ha='center', fontsize=9,
                     style='italic', color='gray')
 
-            # Add transformation arrow
-            fig.text(0.5, 0.5, '→', fontsize=60, ha='center', va='center',
-                    color='darkblue', weight='bold', alpha=0.7)
-
-            plt.tight_layout()
             plt.savefig(figures_dir / 'real_tracts_to_graph.png', dpi=150,
                        bbox_inches='tight', facecolor='white', edgecolor='none')
             print(f"  Created: {figures_dir / 'real_tracts_to_graph.png'}")
