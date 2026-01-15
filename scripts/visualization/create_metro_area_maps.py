@@ -408,6 +408,14 @@ def main():
     # SCOPE: STATE - Process metros for single state
     #==========================================================================
     if args.scope == 'state':
+        # Census 2000 did not use CBSA classification - gracefully skip
+        if args.year == 2000:
+            report_progress(f"Metro maps not available for 2000 census (skipped)")
+            if is_standalone:
+                print(f"Metro area maps not available for Census 2000")
+                print(f"CBSA (Core Based Statistical Area) classification was introduced after 2000.")
+            return 0
+
         # Check if this state has metros
         if args.state not in TOP_METROS:
             report_progress(f"{args.state} - No major metros (skipped)")
@@ -478,9 +486,20 @@ def main():
             # Find metro in MSA dataset
             metro_match = msa_gdf[msa_gdf['NAME'] == metro_name]
             if len(metro_match) == 0:
-                # Try partial match
+                # Try partial match on metro name (before comma)
                 metro_short = metro_name.split(',')[0]
                 metro_match = msa_gdf[msa_gdf['NAME'].str.startswith(metro_short)]
+
+            if len(metro_match) == 0:
+                # Try fuzzy match on primary city (metro names vary by year)
+                # e.g., "Los Angeles-Long Beach-Anaheim" vs "Los Angeles-Long Beach-Santa Ana"
+                primary_city = metro_name.split('-')[0]  # "Los Angeles"
+                metro_match = msa_gdf[msa_gdf['NAME'].str.startswith(primary_city)]
+
+                # If multiple matches, prefer one containing the state code
+                if len(metro_match) > 1:
+                    state_code = metro_name.split(',')[-1].strip()  # "CA"
+                    metro_match = metro_match[metro_match['NAME'].str.contains(f', {state_code}')]
 
             if len(metro_match) == 0:
                 print(f"  [{idx}/{total_metros}] ERROR: MSA not found: {metro_name}")
@@ -526,6 +545,19 @@ def main():
     #==========================================================================
     # SCOPE: ALL (LEGACY BATCH MODE) - Process all metros
     #==========================================================================
+    # Census 2000 did not use CBSA classification - gracefully skip
+    if args.year == 2000:
+        report_progress(f"Metro maps not available for 2000 census (skipped)")
+        if is_standalone:
+            print(f"\n{'='*80}")
+            print(f"Metro Area Maps - Not Available for Census 2000")
+            print(f"{'='*80}")
+            print(f"CBSA (Core Based Statistical Area) classification was")
+            print(f"introduced after 2000. Metro area maps are only available")
+            print(f"for 2010 and 2020 census data.")
+            print(f"{'='*80}\n")
+        return 0
+
     # Banner
     if is_standalone:
         print(f"\n{'='*80}")
@@ -601,9 +633,20 @@ def main():
             metro_match = msa_gdf[msa_gdf['NAME'] == metro_name]
 
             if len(metro_match) == 0:
-                # Try partial match
+                # Try partial match on metro name (before comma)
                 metro_short = metro_name.split(',')[0]
                 metro_match = msa_gdf[msa_gdf['NAME'].str.startswith(metro_short)]
+
+            if len(metro_match) == 0:
+                # Try fuzzy match on primary city (metro names vary by year)
+                # e.g., "Los Angeles-Long Beach-Anaheim" vs "Los Angeles-Long Beach-Santa Ana"
+                primary_city = metro_name.split('-')[0]  # "Los Angeles"
+                metro_match = msa_gdf[msa_gdf['NAME'].str.startswith(primary_city)]
+
+                # If multiple matches, prefer one containing the state code
+                if len(metro_match) > 1:
+                    state_code = metro_name.split(',')[-1].strip()  # "CA"
+                    metro_match = metro_match[metro_match['NAME'].str.contains(f', {state_code}')]
 
             if len(metro_match) == 0:
                 print(f"  [X] MSA not found in dataset: {metro_name}")
