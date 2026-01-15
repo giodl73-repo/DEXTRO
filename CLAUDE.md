@@ -94,14 +94,21 @@ paper/                     # Academic paper
 
 ## Anthropic Skills
 
-**Phase 1 Skills**: ✅ 9 high-priority skills implemented in `.claude/skills/`
+**Phase 1 Skills**: ✅ 10 skills (Enhancement & Pipeline)
+**Phase 2 Skills**: ✅ 7 skills (Visualization & Documentation)
+**Phase 3 Skills**: ✅ 6 skills (Research & Analysis)
+**Phase 4 Skills**: ✅ 3 skills (Code Organization)
+**Phase 5 Skills**: ✅ 2 skills (Editorial)
 
-Claude Code automatically discovers and offers to use these skills when appropriate. You don't need to explicitly invoke them - Claude will suggest using a skill when your request matches its description.
+**Total: 28 skills implemented** in `.claude/skills/`
 
-**Available Skills**:
+**All phases complete!** Claude Code automatically discovers and offers to use these skills when appropriate. You don't need to explicitly invoke them - Claude will suggest using a skill when your request matches its description.
+
+**Available Skills (Phase 1 - Enhancement & Pipeline)**:
 - `/enhancement-plan` - Create enhancement specifications following project patterns
 - `/enhancement-implement` - Execute enhancements with todo tracking and testing
 - `/enhancement-document` - Complete all documentation for finished enhancements
+- `/create-skill` - Create new skills following established patterns
 - `/run-redistricting` - Execute full 50-state redistricting pipeline
 - `/run-analysis-only` - Regenerate analysis without redistricting
 - `/pipeline-debug` - Systematically debug pipeline failures
@@ -109,10 +116,46 @@ Claude Code automatically discovers and offers to use these skills when appropri
 - `/adjacency-build` - Build adjacency graphs from tract data
 - `/data-validate` - Validate data completeness before running pipeline
 
+**Available Skills (Phase 2 - Visualization & Documentation)**:
+- `/create-state-map` - Generate state-level visualization maps
+- `/create-national-map` - Generate national-level maps with AK/HI insets
+- `/create-pedagogical-example` - Create educational algorithm examples
+- `/generate-dashboard` - Generate static HTML dashboard
+- `/update-docs` - Systematically review and update all documentation
+- `/create-session-archive` - Archive session notes with rationale
+- `/create-architecture-diagram` - Create/update Mermaid diagrams
+
+**Available Skills (Phase 3 - Research & Analysis)**:
+- `/create-presentation-figures` - Generate figures for research presentations
+- `/compile-latex` - Compile LaTeX documents (papers, presentations)
+- `/run-statistical-analysis` - Perform quantitative analysis of results
+- `/run-experiment` - Test algorithm variants and compare results
+- `/parameter-sweep` - Test algorithm with different parameter values
+- `/validate-compactness` - Validate redistricting maintains/improves compactness
+
+**Available Skills (Phase 4 - Code Organization)**:
+- `/reorganize-directory-structure` - Restructure directories following best practices
+- `/consolidate-scripts` - Merge duplicate or similar scripts
+- `/refactor-for-pattern` - Refactor code to follow established patterns
+
+**Available Skills (Phase 5 - Editorial)**:
+- `/edit-paper` - Edit academic papers for journal submission (proofreading, condensing, copyediting)
+- `/edit-presentation` - Edit conference presentations (Beamer slides, one idea per slide, time targeting)
+
 **How to use**: Simply describe what you want to do naturally. Examples:
 - "I want to plan a new feature" → Claude offers `/enhancement-plan`
+- "Create a new skill for editing papers" → Claude offers `/create-skill`
 - "Run redistricting for 2020" → Claude offers `/run-redistricting`
-- "The pipeline failed with an error" → Claude offers `/pipeline-debug`
+- "Create a map for California" → Claude offers `/create-state-map`
+- "Update the documentation" → Claude offers `/update-docs`
+- "Edit my paper for submission" → Claude offers `/edit-paper`
+- "Condense my presentation to 15 minutes" → Claude offers `/edit-presentation`
+- "Generate figures for my presentation" → Claude offers `/create-presentation-figures`
+- "Compare edge-weighted vs unweighted mode" → Claude offers `/run-experiment`
+- "Validate compactness improvements" → Claude offers `/validate-compactness`
+- "Reorganize the data directories" → Claude offers `/reorganize-directory-structure`
+- "Consolidate these similar scripts" → Claude offers `/consolidate-scripts`
+- "Make this code follow project patterns" → Claude offers `/refactor-for-pattern`
 
 **For full documentation**: See `docs/SKILLS.md`
 
@@ -732,6 +775,10 @@ print(f"-> Next step")   # Works everywhere
 
 ## Recent Major Changes (Jan 2026)
 
+- **Create-Skill Meta-Skill** (Enhancement 19): Automated skill creation following established patterns, reducing creation time from 30-60 minutes to 5-10 minutes (80-90% time savings)
+- **Edit-Paper Skill** (Enhancement 20): Journal editor for academic papers - proofread, condense, copyedit, page targeting for submission
+- **Edit-Presentation Skill** (Enhancement 21): Conference editor for Beamer presentations - one idea per slide, time targeting, visual clarity
+- **Phase 5 (Editorial) Skills**: New skill category for academic writing and presentation editing
 - **Scope-Based Analysis Pattern**: Unified per-state and national analysis into single scripts
 - **Parallel Pipeline Integration**: Analysis now runs per-state (parallel), not batch (sequential)
 - **Performance Optimization**: Eliminated 300+ minute sequential bottleneck

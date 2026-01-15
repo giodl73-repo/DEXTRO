@@ -12,7 +12,7 @@ Master index of all congressional redistricting pipeline enhancements.
 
 ## Status Overview
 
-### ✅ Completed (13 enhancements)
+### ✅ Completed (16 enhancements)
 
 | # | Title | Completion Date | Files |
 |---|-------|----------------|-------|
@@ -29,6 +29,9 @@ Master index of all congressional redistricting pipeline enhancements.
 | [15](completed/15_multi_year_support.md) | Multi-Year Pipeline Support | Jan 14, 2026 | [View](completed/15_multi_year_support.md) |
 | [17](completed/17_artifact_naming.md) | Artifact Naming Standardization | Jan 14, 2026 | [View](completed/17_artifact_naming.md) |
 | [18](completed/18_figure_quality.md) | Figure Quality Improvement | Jan 15, 2026 | [View](completed/18_figure_quality.md) |
+| [19](active/19_create_skill.md) | Create-Skill Meta-Skill | Jan 15, 2026 | [View](active/19_create_skill.md) |
+| [20](active/20_edit_paper.md) | Edit-Paper Skill | Jan 15, 2026 | [View](active/20_edit_paper.md) |
+| [21](active/21_edit_presentation.md) | Edit-Presentation Skill | Jan 15, 2026 | [View](active/21_edit_presentation.md) |
 
 ### 🔄 In Progress (1 enhancement)
 
