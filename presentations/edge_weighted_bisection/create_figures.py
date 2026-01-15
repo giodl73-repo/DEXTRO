@@ -692,16 +692,20 @@ else:
                     if i < j:  # Only include each edge once
                         edge_weights_dict[(i, j)] = weight
 
-                # Run METIS
+                # Run METIS with same parameters as run_state_redistricting
+                # This ensures contiguous partitions via -contig flag
                 membership = partition_graph(
                     adjacency=adjacency_list,
                     vertex_weights=vweights,
                     nparts=2,
+                    target_weights=[0.5, 0.5],  # Equal population split
+                    recursive=True,  # Use recursive bisection algorithm
+                    ufactor=1.005,  # 0.5% population imbalance tolerance
                     edge_weights=edge_weights_dict,
-                    debug=False
+                    debug=False  # Set True to see METIS command details
                 )
 
-                print(f"  Used METIS partitioning")
+                print(f"  Used METIS partitioning with contiguity enforcement")
 
             except Exception as e:
                 print(f"  [WARNING] METIS not available ({e}), using simple cut")
@@ -825,13 +829,27 @@ else:
                             ax2.plot([x1, x2], [y1, y2], 'k-',
                                    linewidth=thickness, alpha=0.4, zorder=1)
 
-                        # Add weight label
+                        # Add weight label (offset from edge so X marks don't obscure)
                         mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
-                        if not is_cut:  # Only label non-cut edges to avoid clutter
-                            ax2.text(mid_x, mid_y, f'{length_km:.1f}',
-                                   ha='center', va='center', fontsize=6,
-                                   bbox=dict(boxstyle='round', facecolor='white',
-                                           edgecolor='gray', linewidth=0.5, alpha=0.7))
+
+                        # Calculate offset perpendicular to edge
+                        dx, dy = x2 - x1, y2 - y1
+                        edge_length = np.sqrt(dx**2 + dy**2)
+                        if edge_length > 0:
+                            # Perpendicular offset (rotate 90 degrees)
+                            offset_x = -dy / edge_length * 0.2
+                            offset_y = dx / edge_length * 0.2
+                        else:
+                            offset_x, offset_y = 0, 0
+
+                        # Position label off to the side of edge
+                        label_x = mid_x + offset_x
+                        label_y = mid_y + offset_y
+
+                        ax2.text(label_x, label_y, f'{length_km:.1f}',
+                               ha='center', va='center', fontsize=9,
+                               bbox=dict(boxstyle='round', facecolor='white',
+                                       edgecolor='gray', linewidth=0.5, alpha=0.8))
 
             # Draw nodes colored by partition
             for i in range(n_tracts):
@@ -842,12 +860,12 @@ else:
                 circle = Circle((x, y), 0.25, facecolor=color,
                               edgecolor='black', linewidth=2.5, alpha=0.8, zorder=4)
                 ax2.add_patch(circle)
-                ax2.text(x, y, labels[i], ha='center', va='center',
-                        fontsize=12, fontweight='bold', zorder=5)
 
-                # Add population below node
-                ax2.text(x, y - 0.4, f'{pop_k}K', ha='center', va='top',
-                        fontsize=7, style='italic', color='darkgray')
+                # Put label and population inside node (stacked vertically)
+                ax2.text(x, y + 0.05, labels[i], ha='center', va='center',
+                        fontsize=11, fontweight='bold', zorder=5)
+                ax2.text(x, y - 0.08, f'{pop_k}K', ha='center', va='center',
+                        fontsize=7, style='italic', color='black', zorder=5)
 
             ax2.set_xlim(-0.5, 4.5)
             ax2.set_ylim(-0.5, 4.5)
