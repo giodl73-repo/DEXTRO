@@ -496,7 +496,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create US aggregate files')
     parser.add_argument('--output-dir', type=str, help='Output directory (default: outputs/us_YEAR_VERSION)')
     parser.add_argument('--year', type=str, default='2020',
-                        choices=['2010', '2020'],
+                        choices=['2000', '2010', '2020'],
                         help='Census year (default: 2020)')
     parser.add_argument('--version', type=str, default='v1',
                         help='Version (e.g., v1, v2) (default: v1)')

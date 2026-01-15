@@ -330,7 +330,7 @@ def create_national_round_map(round_num, all_states_data, output_file, dpi=150, 
 
 def main():
     parser = argparse.ArgumentParser(description='Create national round progression maps')
-    parser.add_argument('--year', type=str, default='2020', choices=['2020', '2010'],
+    parser.add_argument('--year', type=str, default='2020', choices=['2000', '2010', '2020'],
                        help='Census year (default: 2020)')
     parser.add_argument('--version', type=str, default='v1',
                        help='Version identifier (default: v1)')
