@@ -30,7 +30,7 @@
 @article{mcghee2014measuring,
   title={Measuring partisan bias in single-member district electoral systems},
   author={McGhee, Eric},
-  journal={Legislative Studies Quarterly},
+  journal{Legislative Studies Quarterly},
   volume={39},
   number={1},
   pages={55--85},
@@ -66,13 +66,6 @@
 
 %% Supreme Court Cases
 
-@misc{baker1962,
-  title={Baker v. Carr, 369 U.S. 186},
-  author={{U.S. Supreme Court}},
-  year={1962},
-  note={Established justiciability of redistricting cases}
-}
-
 @misc{reynolds1964,
   title={Reynolds v. Sims, 377 U.S. 533},
   author={{U.S. Supreme Court}},
@@ -103,30 +96,26 @@
 
 %% METIS Graph Partitioning
 
-@inproceedings{karypis1998fast,
+@article{karypis1998metis,
   title={A fast and high quality multilevel scheme for partitioning irregular graphs},
   author={Karypis, George and Kumar, Vipin},
-  booktitle={SIAM Journal on scientific Computing},
+  journal={SIAM Journal on scientific Computing},
   volume={20},
   number={1},
   pages={359--392},
   year={1998},
-  organization={SIAM}
+  publisher={SIAM}
 }
 
-@article{karypis1995metis,
-  title={METIS--unstructured graph partitioning and sparse matrix ordering system, version 2.0},
+@article{karypis1999parallel,
+  title={Parallel multilevel k-way partitioning scheme for irregular graphs},
   author={Karypis, George and Kumar, Vipin},
-  year={1995},
-  publisher={University of Minnesota, Department of Computer Science}
-}
-
-@article{pellegrini2007scotch,
-  title={Scotch and PT-Scotch graph partitioning software: An overview},
-  author={Pellegrini, Fran{\c{c}}ois},
-  journal={Combinatorial Scientific Computing},
-  volume={12},
-  year={2007}
+  journal={SIAM Review},
+  volume={41},
+  number={2},
+  pages={278--300},
+  year={1999},
+  publisher={SIAM}
 }
 
 %% Graph Partitioning for Redistricting
@@ -153,57 +142,38 @@
   publisher={INFORMS}
 }
 
-@article{altman1998modeling,
-  title={Modeling the effect of mandatory district compactness on partisan gerrymanders},
+@article{altman1997districting,
+  title={Is automation the answer? The computational complexity of automated redistricting},
   author={Altman, Micah},
-  journal={Political Geography},
-  volume={17},
-  number={8},
-  pages={989--1012},
-  year={1998},
+  journal={Rutgers Computer and Technology Law Journal},
+  volume={23},
+  pages={81--142},
+  year={1997}
+}
+
+@article{bozkaya2003tabu,
+  title={A tabu search heuristic and adaptive memory procedure for political districting},
+  author={Bozkaya, Burcin and Erkut, Erhan and Laporte, Gilbert},
+  journal={European Journal of Operational Research},
+  volume={144},
+  number={1},
+  pages={12--26},
+  year={2003},
   publisher={Elsevier}
 }
 
-@article{duchin2018gerrymandering,
-  title={Gerrymandering metrics: How to measure? What's the baseline?},
-  author={Duchin, Moon and others},
+@article{duchin2018outlier,
+  title={Outlier analysis for Pennsylvania congressional redistricting},
+  author={Duchin, Moon},
   journal={arXiv preprint arXiv:1801.02064},
   year={2018}
 }
 
-@inproceedings{deford2019implementing,
-  title={Implementing partisan symmetry: Problems and paradoxes},
-  author={DeFord, Daryl and Eubank, Nicholas and Rodden, Jonathan},
-  booktitle={Political Analysis Workshop},
-  year={2019}
-}
-
-@article{fifield2020automated,
-  title={Automated redistricting simulation using Markov chain Monte Carlo},
+@article{fifield2015new,
+  title={A new automated redistricting simulator using Markov chain Monte Carlo},
   author={Fifield, Benjamin and Higgins, Michael and Imai, Kosuke and Tarr, Alexander},
-  journal={Journal of Computational and Graphical Statistics},
-  volume={29},
-  number={4},
-  pages={715--728},
-  year={2020},
-  publisher={Taylor \& Francis}
-}
-
-@misc{alarm2022minnesota,
-  title={Minnesota Congressional Districts},
-  author={{ALARM Project}},
-  year={2022},
-  howpublished={\url{https://alarm-redist.org/fifty-states/MN_cd_2020/}},
-  note={Algorithmic redistricting analysis of Minnesota's 2022 court-ordered congressional plan}
-}
-
-@techreport{duchin2022alabama,
-  title={Expert Report of Moon Duchin},
-  author={Duchin, Moon},
-  institution={U.S. District Court for the Northern District of Alabama},
-  year={2022},
-  note={Expert testimony in \textit{Milligan v. Allen} analyzing compactness and VRA compliance of Alabama congressional maps},
-  howpublished={\url{https://www.brennancenter.org/sites/default/files/2022-02/Duchin_Report.pdf}}
+  journal={Work in Progress},
+  year={2015}
 }
 
 %% Compactness Measures
@@ -218,7 +188,7 @@
   year={1991}
 }
 
-@article{reock1961measure,
+@article{reock1961measuring,
   title={A note: Measuring compactness as a requirement of legislative apportionment},
   author={Reock, Ernest C},
   journal={Midwest Journal of Political Science},
@@ -238,17 +208,6 @@
   publisher={JSTOR}
 }
 
-@article{niemi1990measuring,
-  title={Measuring compactness and the role of a compactness standard in a test for partisan and racial gerrymandering},
-  author={Niemi, Richard G and Grofman, Bernard and Carlucci, Carl and Hofeller, Thomas},
-  journal={The Journal of Politics},
-  volume={52},
-  number={4},
-  pages={1155--1181},
-  year={1990},
-  publisher={University of Texas Press}
-}
-
 %% Recent Computational Redistricting
 
 @article{liu2016pear,
@@ -261,13 +220,6 @@
   publisher={Elsevier}
 }
 
-@article{king2015computers,
-  title={How the Republicans gerrymandered their way to victory},
-  author={King, Gary},
-  journal={The Washington Post},
-  year={2015}
-}
-
 @article{pegden2017computational,
   title={A computational approach to measuring vote elasticity and competitiveness},
   author={Pegden, Wesley and Procaccia, Ariel D and Yu, Dingli},
@@ -277,11 +229,19 @@
 
 %% Census Data and Demographics
 
-@misc{census2020redistricting,
+@misc{census2020pl,
   title={2020 Census Redistricting Data (Public Law 94-171) Summary File},
   author={{U.S. Census Bureau}},
   year={2021},
   howpublished={\url{https://www.census.gov/programs-surveys/decennial-census/about/rdo/summary-files.html}}
+}
+
+@misc{tiger-census,
+  title={TIGER/Line Shapefiles},
+  author={{U.S. Census Bureau}},
+  year={2020},
+  howpublished={\url{https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html}},
+  note={Census tract geographic boundaries}
 }
 
 @misc{census2023tigerline,
@@ -292,19 +252,12 @@
   note={Enacted 2020 Census-based congressional district boundaries}
 }
 
-@misc{indiana2021redistricting,
-  title={Indiana General Assembly 2021 Congressional Redistricting Plan},
-  author={{Indiana General Assembly}},
-  year={2021},
-  howpublished={\url{https://iga.in.gov/legislative/2021/redistricting/}},
-  note={Commission-drawn congressional district map following 2020 Census}
-}
-
-@article{ansolabehere2012mecubed,
-  title={MECUBED: The MIT Election Data and Science Lab's election returns dataset},
-  author={Ansolabehere, Stephen and Palmer, Maxwell and Lee, Amanda},
-  journal={Massachusetts Institute of Technology},
-  year={2012}
+@misc{mit-electionlab,
+  title={U.S. President Precinct-Level Returns 2020},
+  author={{MIT Election Data + Science Lab}},
+  year={2020},
+  howpublished={\url{https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/JXPREB}},
+  note={Accessed January 2026}
 }
 
 @misc{medsl2020,
@@ -333,36 +286,4 @@
   pages={579--597},
   year={2006},
   publisher={Elsevier}
-}
-
-%% Fairness and Representation
-
-@article{grofman1982optimal,
-  title={Optimal partisan gerrymandering},
-  author={Grofman, Bernard and  Scarrow, Howard A},
-  journal={Political Geography Quarterly},
-  volume={1},
-  number={1},
-  pages={71--80},
-  year={1982},
-  publisher={Elsevier}
-}
-
-@book{tufte1973relationship,
-  title={The relationship between seats and votes in two-party systems},
-  author={Tufte, Edward R},
-  journal={American Political Science Review},
-  volume={67},
-  number={2},
-  pages={540--554},
-  year={1973},
-  publisher={Cambridge University Press}
-}
-
-@article{nagel1972simplified,
-  title={A simplified version of the method of maximum likelihood for n-chotomous selection},
-  author={Nagel, Stuart S},
-  journal={Political Methodology},
-  pages={63--86},
-  year={1972}
 }

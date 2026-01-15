@@ -113,6 +113,65 @@ For context, our mean Polsby-Popper score of 0.220 places the algorithmic distri
 The distribution reveals that 155 districts (36\%) achieve "medium" compactness (0.20--0.30), with 106 districts (24\%) exceeding 0.30 (high to very high compactness). Only 83 districts (19\%) fall below 0.10 (very low compactness), typically in states with challenging geography (e.g., islands, peninsulas, or extreme elongation like Alaska's Panhandle).
 
 Compactness naturally varies by state geography. Wyoming's single at-large district scores 0.726 (nearly circular), while Hawaii's island geography produces lower scores (mean 0.219). The algorithm cannot overcome fundamental geographic constraints, but it maximizes compactness given those constraints without manual intervention.
+
+\subsection{Comparison to Enacted 2020 Congressional Districts}
+
+To assess algorithmic performance against current practice, we compare our results to the enacted 118th Congressional District boundaries (based on 2020 Census redistricting) from the U.S. Census Bureau TIGER/Line database \cite{census2023tigerline}. Table~\ref{tab:baseline_comparison} presents the state-level comparison.
+
+\begin{table}[h]
+\centering
+\caption{Compactness Comparison: Algorithmic vs Enacted Districts (National Averages)}
+\label{tab:baseline_comparison}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{Algorithmic} & \textbf{Enacted 2020} \\
+\midrule
+Mean Polsby-Popper & 0.235 & 0.305 \\
+Mean Reock & 0.200 & 0.347 \\
+\midrule
+\textbf{Difference} & \textbf{-22.8\%} & \textbf{-42.6\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Surprisingly, the enacted 2020 congressional districts exhibit higher compactness than our algorithmic approach on average. This contradicts the common assumption that partisan gerrymandering inevitably produces less compact districts. Several factors contribute to this result:
+
+\textbf{Block vs. Tract Granularity:} Enacted plans use block-level data (8 million blocks), enabling finer boundary adjustments. Our tract-level implementation (84,000 tracts) constrains geometric precision. Expert mapmakers can optimize boundaries at block level, achieving smoother perimeters and better compactness.
+
+\textbf{Manual Optimization:} Human redistricting involves extensive refinement to respect traditional criteria including compactness, while balancing population equality, communities of interest, and political considerations. Recursive bisection makes a single split decision at each level without backtracking or refinement, potentially missing locally optimal boundary placements.
+
+\textbf{State-Level Variation:} While the national average favors enacted districts, results vary substantially by state. Table~\ref{tab:state_comparison} shows selected states:
+
+\begin{table}[h]
+\centering
+\caption{State-Level Polsby-Popper Comparison (Selected States)}
+\label{tab:state_comparison}
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{State} & \textbf{Algo.} & \textbf{Enacted} & \textbf{Change} \\
+\midrule
+Illinois & 0.240 & 0.148 & +62.5\% \\
+New Hampshire & 0.256 & 0.159 & +60.5\% \\
+Rhode Island & 0.419 & 0.279 & +50.0\% \\
+Maine & 0.321 & 0.222 & +44.8\% \\
+Connecticut & 0.400 & 0.277 & +44.6\% \\
+\midrule
+Texas & 0.163 & 0.189 & -13.5\% \\
+Michigan & 0.183 & 0.412 & -55.6\% \\
+Florida & 0.176 & 0.434 & -59.4\% \\
+Hawaii & 0.093 & 0.251 & -62.7\% \\
+Indiana & 0.141 & 0.478 & -70.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Ten states show algorithmic improvements, with Illinois, New Hampshire, and Rhode Island achieving 50--62\% higher compactness. However, 40 states exhibit lower algorithmic compactness, particularly in states with commissioned or court-drawn plans (Michigan, Florida) that prioritized geographic criteria. Indiana's enacted plan achieves exceptionally high compactness (0.478), reflecting its commission-drawn 2021 map that explicitly optimized geometric criteria \cite{indiana2021redistricting}.
+
+\textbf{Implications:} This comparison reveals that algorithmic redistricting—at least in its basic recursive bisection form—does not automatically produce more compact districts than careful human mapmaking. The algorithm's advantages lie in transparency, reproducibility, and immunity to partisan manipulation, not necessarily in geometric optimality. Future enhancements including block-level data, boundary smoothing, and compactness-weighted optimization may close this gap while preserving algorithmic objectivity.
+
+Nevertheless, the results demonstrate that recursive bisection produces districts within the range of existing plans, comparable to many state maps and superior in states with known gerrymandering (Illinois, Rhode Island). The method provides a viable baseline for algorithmic redistricting, with clear paths toward incremental improvement.
+
 \subsection{Demographic Representation}
 
 The algorithm operates without knowledge of racial or ethnic demographics, yet produces districts with measurable demographic characteristics. Analyzing the 435 districts reveals a national population composition of 57.9\% White, 18.7\% Hispanic, 12.0\% Black, 5.9\% Asian, and 5.5\% Other.

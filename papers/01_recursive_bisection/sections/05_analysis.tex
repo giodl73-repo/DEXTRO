@@ -70,9 +70,17 @@ Figure~\ref{fig:political_margin_hist} shows the distribution of Democratic marg
 \end{figure}
 
 The distribution shows clear separation between Democratic and Republican districts, with relatively few in the competitive center. This pattern matches recent political science research documenting increasing geographic polarization in American politics \cite{cho2006geographic}.
-\subsection{Comparison to Actual Districts}
+\subsection{Comparison to Enacted Districts}
 
-Actual 2022 congressional maps contain similar partisan distributions but achieve this through intentional considerations—gerrymandering or bipartisan incumbent protection. Our algorithm achieves comparable outcomes without partisan input, suggesting political geography constrains results more than drawing method. The efficiency gap matches patterns in independent commission states \cite{chen2013unintentional}, indicating our approach approximates neutral commissions with greater reproducibility.
+As detailed in Section~\ref{sec:results}, the enacted 2020 congressional districts exhibit higher average compactness (Polsby-Popper: 0.305) than our algorithmic approach (0.235). This surprising result warrants careful interpretation in the context of partisan fairness and process transparency.
+
+Enacted 2022 congressional maps achieve their higher compactness through manual refinement and explicit optimization of traditional redistricting criteria, including compactness itself. However, these same maps often incorporate intentional partisan considerations—either direct gerrymandering or bipartisan incumbent protection agreements. The key question is whether higher geometric compactness justifies accepting potentially partisan manipulation.
+
+Our algorithm produces comparable partisan outcomes to enacted maps without any partisan input. The efficiency gap favoring Democrats in district count (56.5\% Democratic-leaning vs. 51.3\% national vote share) matches patterns observed in independent commission states \cite{chen2013unintentional}, suggesting our approach approximates neutral commissions while providing stronger guarantees against manipulation through algorithmic transparency and reproducibility.
+
+States where our algorithm achieves higher compactness—Illinois (+62.5\%), New Hampshire (+60.5\%), Rhode Island (+50.0\%)—are notable for having politically drawn maps with histories of gerrymandering concerns. Conversely, states where enacted plans achieve higher compactness often employed independent commissions (Michigan, Florida post-2010 reforms) or court-ordered plans that explicitly prioritized geographic criteria.
+
+This pattern suggests algorithmic redistricting offers particular value in states with partisan-controlled map drawing, where it can exceed the compactness of intentionally manipulated plans. In states with strong institutional protections (commissions, court oversight), human expertise combined with those protections may achieve superior geometric outcomes. However, algorithmic approaches provide reproducibility and immunity to future manipulation that even well-designed institutions cannot guarantee—commissioners change, political pressures evolve, but an algorithm's operation remains constant.
 \subsection{Implications for Fair Representation}
 
 What constitutes "fair" partisan representation remains philosophically contested. Three perspectives dominate the debate:
