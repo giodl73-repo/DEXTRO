@@ -931,15 +931,17 @@ else:
                 color = partition_colors[membership[i]]
                 pop_k = sample_tracts.iloc[i]['population'] / 1000
 
-                circle = Circle((x, y), 0.25, facecolor=color,
+                # Slightly larger circle to accommodate text
+                circle = Circle((x, y), 0.3, facecolor=color,
                               edgecolor='black', linewidth=2.5, alpha=0.8, zorder=4)
                 ax2.add_patch(circle)
 
                 # Put label and population inside node (stacked vertically)
-                ax2.text(x, y + 0.05, labels[i], ha='center', va='center',
-                        fontsize=11, fontweight='bold', zorder=5)
-                ax2.text(x, y - 0.08, f'{pop_k:.1f}K', ha='center', va='center',
-                        fontsize=9, style='italic', color='black', zorder=5)
+                # Match map styling: fontsize=10, bold for both
+                ax2.text(x, y + 0.06, labels[i], ha='center', va='center',
+                        fontsize=10, fontweight='bold', zorder=5)
+                ax2.text(x, y - 0.09, f'{pop_k:.1f}K', ha='center', va='center',
+                        fontsize=10, fontweight='bold', color='black', zorder=5)
 
             ax2.set_xlim(-0.5, 4.5)
             ax2.set_ylim(-0.5, 4.5)
