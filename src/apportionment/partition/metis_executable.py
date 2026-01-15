@@ -9,7 +9,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -69,7 +69,8 @@ def partition_graph_with_executable(
     target_weights: Optional[List[float]] = None,
     ufactor: Optional[float] = None,
     niter: int = 100,
-    debug: bool = False
+    debug: bool = False,
+    edge_weights: Optional[Dict[Tuple[int, int], float]] = None
 ) -> np.ndarray:
     """
     Partition graph using gpmetis.exe executable.
@@ -90,6 +91,10 @@ def partition_graph_with_executable(
         Number of refinement iterations (default 10 in METIS)
     debug : bool, default False
         Print detailed progress and command information
+    edge_weights : Dict[Tuple[int, int], float], optional
+        Edge weights mapping (i, j) tuples to boundary lengths in meters.
+        If provided, METIS will minimize weighted edge cut (boundary length).
+        If None, METIS minimizes unweighted edge cut.
 
     Returns
     -------
@@ -117,7 +122,7 @@ def partition_graph_with_executable(
 
         # Write graph in METIS format
         graph_file = tmpdir / 'graph.txt'
-        _write_metis_graph(graph_file, adjacency, vertex_weights, debug=debug)
+        _write_metis_graph(graph_file, adjacency, vertex_weights, edge_weights=edge_weights, debug=debug)
 
         # Run gpmetis
         partition_file = tmpdir / 'graph.txt.part.{}'.format(nparts)
@@ -192,6 +197,7 @@ def _write_metis_graph(
     file_path: Path,
     adjacency: List[List[int]],
     vertex_weights: np.ndarray,
+    edge_weights: Optional[Dict[Tuple[int, int], float]] = None,
     debug: bool = False
 ):
     """
@@ -199,24 +205,30 @@ def _write_metis_graph(
 
     METIS graph format:
     Line 1: <num_vertices> <num_edges> [fmt] [ncon]
-      fmt = 1 (has vertex weights)
+      fmt = 010 (vertex weights, no edge weights) or 011 (vertex weights + edge weights)
       ncon = 1 (one weight per vertex)
-    Line 2+: <vertex_weight> <neighbor1> <neighbor2> ...
+    Line 2+:
+      Without edge weights: <vertex_weight> <neighbor1> <neighbor2> ...
+      With edge weights: <vertex_weight> <neighbor1> <edge_weight1> <neighbor2> <edge_weight2> ...
 
     Note: METIS uses 1-based indexing!
+    Note: Edge weights must be positive integers (we scale boundary lengths to centimeters)
     """
     n_vertices = len(adjacency)
     n_edges = sum(len(neighbors) for neighbors in adjacency) // 2
 
+    has_edge_weights = edge_weights is not None and len(edge_weights) > 0
+
     # Use buffered writing for better performance
     if debug:
-        print(f"Writing METIS graph with {n_vertices:,} vertices to {file_path.name}...")
+        mode_str = "with edge weights" if has_edge_weights else "without edge weights"
+        print(f"Writing METIS graph {mode_str} with {n_vertices:,} vertices to {file_path.name}...")
 
     with open(file_path, 'w', buffering=8*1024*1024) as f:  # 8MB buffer
         # Header: n_vertices n_edges fmt ncon
-        # fmt=010 (vertex weights, no edge weights), ncon=1 (one weight per vertex)
-        # METIS uses 3-digit format code: XYZ where X=edge weights, Y=vertex weights, Z=vertex sizes
-        f.write(f"{n_vertices} {n_edges} 010 1\n")
+        # fmt: 010 = vertex weights only, 011 = vertex weights + edge weights
+        fmt_code = "011" if has_edge_weights else "010"
+        f.write(f"{n_vertices} {n_edges} {fmt_code} 1\n")
 
         # Write vertices in chunks to avoid memory issues
         chunk_size = 50000
@@ -228,7 +240,21 @@ def _write_metis_graph(
             for i in range(start_idx, end_idx):
                 weight = vertex_weights[i]
                 neighbors = adjacency[i]
-                neighbors_str = ' '.join(str(n + 1) for n in neighbors)
+
+                if has_edge_weights:
+                    # Format: vertex_weight neighbor1 edge_weight1 neighbor2 edge_weight2 ...
+                    # Edge weights in centimeters (multiply by 100 for integer precision)
+                    neighbor_pairs = []
+                    for n in neighbors:
+                        edge_key = (min(i, n), max(i, n))  # Canonical ordering
+                        edge_weight_m = edge_weights.get(edge_key, 1.0)  # Default 1m if missing
+                        edge_weight_cm = max(1, int(edge_weight_m * 100))  # Convert to cm, min 1
+                        neighbor_pairs.append(f"{n + 1} {edge_weight_cm}")
+                    neighbors_str = ' '.join(neighbor_pairs)
+                else:
+                    # Format: vertex_weight neighbor1 neighbor2 ...
+                    neighbors_str = ' '.join(str(n + 1) for n in neighbors)
+
                 lines.append(f"{int(weight)} {neighbors_str}\n")
 
             # Write chunk

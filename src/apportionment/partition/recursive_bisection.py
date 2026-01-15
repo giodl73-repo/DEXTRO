@@ -933,7 +933,7 @@ class RecursiveBisection:
 
             # Calculate statistics for this level
             region_stats = []
-            for region_id, node in enumerate(nodes, start=1):
+            for region_id, node in enumerate(nodes):
                 pop = node.population
                 num_blocks = len(node.block_indices)
                 region_stats.append({

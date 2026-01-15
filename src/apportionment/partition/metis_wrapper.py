@@ -70,28 +70,21 @@ def partition_graph(
             print(f"pymetis failed: {e}")
             print("Trying fallback methods...")
 
-    # Try gpmetis.exe executable (if compiled)
+    # Use gpmetis.exe executable (required - no fallbacks to ensure quality)
     try:
         if debug:
-            print("Trying gpmetis.exe executable...")
+            print("Using gpmetis.exe executable...")
         from .metis_executable import partition_graph_with_executable
         return partition_graph_with_executable(adjacency, vertex_weights, nparts, target_weights, ufactor, niter, debug=debug, edge_weights=edge_weights)
-    except ImportError:
-        if debug:
-            print("metis_executable module not available")
-    except Exception as e:
-        if debug:
-            print(f"gpmetis.exe failed: {e}")
-
-    # Emergency fallback: NetworkX native Kernighan-Lin
-    try:
-        if debug:
-            print("Using NetworkX Kernighan-Lin bisection (may be slower, lower quality)")
-        return _partition_with_networkx_native(adjacency, vertex_weights, nparts)
+    except ImportError as e:
+        raise RuntimeError(
+            f"METIS not available: {e}\n"
+            "Please build METIS using scripts/build_metis_windows.bat"
+        )
     except Exception as e:
         raise RuntimeError(
-            f"All partitioning methods failed. Last error: {e}\n"
-            "Please install pymetis or compile METIS: see INSTALL.md"
+            f"METIS partitioning failed: {e}\n"
+            "Check that gpmetis.exe is available and working correctly"
         )
 
 
