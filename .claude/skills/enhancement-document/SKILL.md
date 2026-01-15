@@ -1,6 +1,6 @@
 ---
 name: enhancement-document
-description: Complete documentation for a finished enhancement. Use when an enhancement is fully implemented and tested. Updates ENHANCEMENTS_2026.md, CHANGELOG.md, CLAUDE.md, and related documentation files.
+description: Complete documentation for a finished enhancement. Use when an enhancement is fully implemented and tested. Updates enhancement file, INDEX.md, CHANGELOG.md, CLAUDE.md, and related documentation files.
 allowed-tools:
   - Read
   - Write
@@ -31,9 +31,9 @@ This skill completes the documentation for a finished enhancement, ensuring all 
 
 ## Workflow
 
-### Step 1: Update ENHANCEMENTS_2026.md
+### Step 1: Update Enhancement File
 
-1. **Read** `docs/ENHANCEMENTS_2026.md` to find the enhancement
+1. **Locate** enhancement file in `docs/enhancements/active/XX_name.md`
 2. **Update status section**:
 ```markdown
 **Status**: ✅ COMPLETED
@@ -71,7 +71,19 @@ This skill completes the documentation for a finished enhancement, ensuring all 
 - Full validation: ✓ Passed
 ```
 
-### Step 2: Update CHANGELOG.md
+### Step 2: Move Enhancement File and Update INDEX.md
+
+1. **Move** enhancement file from `docs/enhancements/active/` to `docs/enhancements/completed/`
+   ```bash
+   git mv docs/enhancements/active/XX_name.md docs/enhancements/completed/XX_name.md
+   ```
+
+2. **Update** `docs/enhancements/INDEX.md`:
+   - Move enhancement from "In Progress" or "Planned" section to "Completed" section
+   - Add completion date
+   - Update total counts in headers
+
+### Step 3: Update CHANGELOG.md
 
 1. **Read** `docs/CHANGELOG.md`
 2. **Update "Last Updated" date** at top
@@ -99,7 +111,7 @@ This skill completes the documentation for a finished enhancement, ensuring all 
 - Quantitative improvements if applicable
 ```
 
-### Step 3: Update CLAUDE.md
+### Step 4: Update CLAUDE.md
 
 1. **Read** `CLAUDE.md`
 2. **Update "Last Updated" date** (line 5)
@@ -118,7 +130,7 @@ This skill completes the documentation for a finished enhancement, ensuring all 
 X. **[New Pitfall]** - Description and solution
 ```
 
-### Step 4: Update ARCHITECTURE.md (if applicable)
+### Step 5: Update ARCHITECTURE.md (if applicable)
 
 Only if enhancement changed system design:
 
@@ -129,7 +141,7 @@ Only if enhancement changed system design:
    - Component relationships
    - Code examples with new patterns
 
-### Step 5: Update CODING_PATTERNS.md (if applicable)
+### Step 6: Update CODING_PATTERNS.md (if applicable)
 
 Only if enhancement introduced new patterns:
 
@@ -140,7 +152,7 @@ Only if enhancement introduced new patterns:
    - When to use
    - Anti-patterns (what NOT to do)
 
-### Step 6: Update DATA_FORMATS.md (if applicable)
+### Step 7: Update DATA_FORMATS.md (if applicable)
 
 Only if enhancement changed data formats:
 
@@ -155,8 +167,10 @@ Only if enhancement changed data formats:
 
 Before marking documentation complete, verify:
 
-- [ ] ENHANCEMENTS_2026.md status updated to ✅ COMPLETED
-- [ ] ENHANCEMENTS_2026.md includes completion summary with dates
+- [ ] Enhancement file status updated to ✅ COMPLETED
+- [ ] Enhancement file includes completion summary with dates
+- [ ] Enhancement file moved from `active/` to `completed/`
+- [ ] INDEX.md updated with new status and completion date
 - [ ] Quantitative metrics documented (if applicable)
 - [ ] Files modified list is accurate and complete
 - [ ] CHANGELOG.md updated with dated entry

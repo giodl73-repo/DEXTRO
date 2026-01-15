@@ -1,6 +1,6 @@
 ---
 name: enhancement-implement
-description: Execute an enhancement following the standard workflow with progress tracking. Use when implementing a planned enhancement from ENHANCEMENTS_2026.md. Creates todo lists, follows phases sequentially, uses STATUS protocol for progress reporting.
+description: Execute an enhancement following the standard workflow with progress tracking. Use when implementing a planned enhancement from docs/enhancements/. Creates todo lists, follows phases sequentially, uses STATUS protocol for progress reporting.
 allowed-tools:
   - Read
   - Write
@@ -20,9 +20,10 @@ This skill executes planned enhancements following the project's standard workfl
 
 ## Prerequisites
 
-- Enhancement must be documented in `docs/ENHANCEMENTS_2026.md` with status 📋 PLANNED
+- Enhancement must be documented in `docs/enhancements/active/` with status 📋 PLANNED
 - Enhancement spec includes detailed phases and file lists
 - All data dependencies are available or noted
+- Check `docs/enhancements/INDEX.md` for enhancement status
 
 ## When to Use This Skill
 
@@ -35,10 +36,11 @@ This skill executes planned enhancements following the project's standard workfl
 
 ### Step 1: Read Enhancement Specification
 
-1. Read `docs/ENHANCEMENTS_2026.md` to find the enhancement
-2. Extract all phases, tasks, and file lists
-3. Note any dependencies or prerequisites
-4. Review testing plan
+1. Check `docs/enhancements/INDEX.md` to locate the enhancement file
+2. Read the enhancement file from `docs/enhancements/active/XX_name.md`
+3. Extract all phases, tasks, and file lists
+4. Note any dependencies or prerequisites
+5. Review testing plan
 
 ### Step 2: Create Todo List
 
@@ -133,11 +135,13 @@ Follow the standard testing pattern:
 
 ### Step 6: Mark Enhancement In Progress
 
-Update `docs/ENHANCEMENTS_2026.md`:
+Update the enhancement file in `docs/enhancements/active/XX_name.md`:
 ```markdown
-**Status**: 🚧 IN PROGRESS
+**Status**: 🔄 IN PROGRESS
 **Started**: [Date]
 ```
+
+Also update `docs/enhancements/INDEX.md` to reflect the status change.
 
 ## Key Patterns
 
@@ -227,7 +231,9 @@ Once all phases complete:
 1. Run full validation suite
 2. Use `/enhancement-document` skill to update all documentation
 3. Create git commit with clear message
-4. Mark enhancement as ✅ COMPLETED in ENHANCEMENTS_2026.md
+4. Move enhancement file from `active/` to `completed/`
+5. Update `docs/enhancements/INDEX.md`
+6. Mark enhancement as ✅ COMPLETED
 
 ## What You'll Get
 

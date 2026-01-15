@@ -33,7 +33,8 @@ Read the following files to understand project structure and patterns:
 1. `CLAUDE.md` - Project overview, quick reference, recent changes
 2. `docs/ARCHITECTURE.md` - System design, data flow, component relationships
 3. `docs/CODING_PATTERNS.md` - Implementation patterns, progress reporting, file naming
-4. `docs/ENHANCEMENTS_2026.md` - Review similar past enhancements for patterns
+4. `docs/enhancements/INDEX.md` - Review similar past enhancements for patterns
+5. `docs/enhancements/templates/enhancement_template.md` - Standard template
 
 **Use Grep to find:**
 - Similar past enhancements using keywords from user request
@@ -51,7 +52,9 @@ Identify:
 
 ### Step 3: Create Enhancement Specification
 
-Write a comprehensive enhancement entry to `docs/ENHANCEMENTS_2026.md` following this template:
+Determine next enhancement number by checking `docs/enhancements/INDEX.md`.
+
+Create a new file in `docs/enhancements/active/` following the template from `docs/enhancements/templates/enhancement_template.md`:
 
 ```markdown
 ## Enhancement XX: [Descriptive Name]
@@ -140,7 +143,7 @@ Follow project testing pattern:
 - [ ] Criterion 2: [Specific, testable condition]
 - [ ] Criterion 3: [Specific, testable condition]
 - [ ] All tests pass (print-only, small state, full validation)
-- [ ] Documentation updated (CHANGELOG, ENHANCEMENTS_2026, CLAUDE.md)
+- [ ] Documentation updated (CHANGELOG, INDEX.md, CLAUDE.md)
 - [ ] Code follows patterns in CODING_PATTERNS.md
 
 ### Estimated Complexity
@@ -154,13 +157,14 @@ Follow project testing pattern:
 [Any additional context, gotchas, or important considerations]
 ```
 
-### Step 4: Present to User
+### Step 4: Update Index and Present to User
 
 After writing the enhancement specification:
-1. Summarize the key points for the user
-2. Highlight any risks or dependencies
-3. Get user approval before proceeding to implementation
-4. Suggest next step: Use `/enhancement-implement` skill to execute
+1. Add entry to `docs/enhancements/INDEX.md` in the "Planned" section
+2. Summarize the key points for the user
+3. Highlight any risks or dependencies
+4. Get user approval before proceeding to implementation
+5. Suggest next step: Use `/enhancement-implement` skill to execute
 
 ## Key Patterns to Follow
 
@@ -214,11 +218,12 @@ if output_file.exists() and not force:
 
 After completing this skill, you will have:
 
-1. **Complete enhancement specification** added to `docs/ENHANCEMENTS_2026.md`
-2. **Detailed implementation phases** with specific tasks and files
-3. **Testing approach** following project patterns
-4. **Success criteria** for validation
-5. **User approval** before proceeding to implementation
+1. **Complete enhancement specification** in `docs/enhancements/active/XX_name.md`
+2. **Entry added** to `docs/enhancements/INDEX.md`
+3. **Detailed implementation phases** with specific tasks and files
+4. **Testing approach** following project patterns
+5. **Success criteria** for validation
+6. **User approval** before proceeding to implementation
 
 ## Next Steps
 
@@ -230,8 +235,8 @@ After user approves the plan:
 
 ## Examples
 
-See `docs/ENHANCEMENTS_2026.md` for 18+ completed enhancement examples:
-- Enhancement 1: Compactness Integration (Simple integration)
-- Enhancement 7: Edge-Weighted Bisection (Algorithm improvement with quantitative validation)
-- Enhancement 13: Directory Unification (Large refactoring)
-- Enhancement 18: Figure Quality Improvement (Validation + retry logic)
+See `docs/enhancements/completed/` for 14 completed enhancement examples:
+- [01_compactness_integration.md](../../docs/enhancements/completed/01_compactness_integration.md) - Simple integration
+- [07_edge_weighted_bisection.md](../../docs/enhancements/completed/07_edge_weighted_bisection.md) - Algorithm improvement with quantitative validation
+- [13_directory_unification.md](../../docs/enhancements/completed/13_directory_unification.md) - Large refactoring
+- [18_figure_quality.md](../../docs/enhancements/completed/18_figure_quality.md) - Validation + retry logic
