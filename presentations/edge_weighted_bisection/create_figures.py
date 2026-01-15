@@ -760,33 +760,73 @@ else:
                         bbox=dict(boxstyle='round', facecolor='white',
                                 edgecolor='black', linewidth=1))
 
-            # Highlight cut boundaries (thick red)
+            # Label internal boundaries (non-cut edges)
+            for i in range(n_tracts):
+                for j in adjacency.get(i, []):
+                    if i < j:  # Only label each edge once
+                        is_cut = (i, j) in cut_edges or (j, i) in cut_edges
+                        if not is_cut:
+                            geom_i = sample_tracts.iloc[i].geometry
+                            geom_j = sample_tracts.iloc[j].geometry
+                            boundary = geom_i.intersection(geom_j.boundary)
+                            if not boundary.is_empty:
+                                # Get midpoint of boundary
+                                mid_point = boundary.centroid
+                                length_km = edge_weights.get((i, j), 0)
+                                ax1.text(mid_point.x, mid_point.y, f'{length_km:.1f}',
+                                       ha='center', va='center', fontsize=7,
+                                       bbox=dict(boxstyle='round', facecolor='white',
+                                               edgecolor='black', linewidth=0.5, alpha=0.8))
+
+            # Highlight cut boundaries (thick red) and label them
+            total_cut_length = 0
             for i, j in cut_edges:
                 geom_i = sample_tracts.iloc[i].geometry
                 geom_j = sample_tracts.iloc[j].geometry
                 boundary = geom_i.intersection(geom_j.boundary)
                 if not boundary.is_empty:
                     gpd.GeoSeries([boundary]).plot(ax=ax1, color='red', linewidth=4, alpha=0.9, zorder=10)
+                    # Label cut edges
+                    mid_point = boundary.centroid
+                    length_km = edge_weights.get((i, j), edge_weights.get((j, i), 0))
+                    total_cut_length += length_km
+                    ax1.text(mid_point.x, mid_point.y, f'{length_km:.1f}',
+                           ha='center', va='center', fontsize=7, fontweight='bold',
+                           bbox=dict(boxstyle='round', facecolor='yellow',
+                                   edgecolor='red', linewidth=1.5, alpha=0.9))
 
-            # Add partition labels
+            # Calculate perimeters
             part0_geoms = sample_tracts[sample_tracts['partition'] == 0].geometry
             part1_geoms = sample_tracts[sample_tracts['partition'] == 1].geometry
+            combined_geom = sample_tracts.geometry.unary_union
+
+            # Pre-cut perimeter (external boundary of all tracts)
+            pre_cut_perimeter = combined_geom.boundary.length / 1000  # Convert to km
+
+            # Post-cut perimeters (external boundaries of each region)
             if len(part0_geoms) > 0:
-                c0 = part0_geoms.unary_union.centroid
+                region0_union = part0_geoms.unary_union
+                region0_perimeter = region0_union.boundary.length / 1000
+                c0 = region0_union.centroid
                 pop0 = int(sample_tracts[sample_tracts['partition'] == 0]['population'].sum() / 1000)
-                ax1.text(c0.x, c0.y, f'Region 0\n{pop0}K total',
-                        ha='center', va='center', fontsize=9, style='italic',
-                        bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.5, edgecolor='darkblue'))
+                ax1.text(c0.x, c0.y, f'Region 0\n{pop0}K pop\n{region0_perimeter:.1f} km perimeter',
+                        ha='center', va='center', fontsize=8, style='italic',
+                        bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7, edgecolor='darkblue'))
+
             if len(part1_geoms) > 0:
-                c1 = part1_geoms.unary_union.centroid
+                region1_union = part1_geoms.unary_union
+                region1_perimeter = region1_union.boundary.length / 1000
+                c1 = region1_union.centroid
                 pop1 = int(sample_tracts[sample_tracts['partition'] == 1]['population'].sum() / 1000)
-                ax1.text(c1.x, c1.y, f'Region 1\n{pop1}K total',
-                        ha='center', va='center', fontsize=9, style='italic',
-                        bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.5, edgecolor='darkred'))
+                ax1.text(c1.x, c1.y, f'Region 1\n{pop1}K pop\n{region1_perimeter:.1f} km perimeter',
+                        ha='center', va='center', fontsize=8, style='italic',
+                        bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.7, edgecolor='darkred'))
 
             ax1.axis('off')
-            ax1.text(0.5, -0.05, f'Real Minneapolis tracts\nMETIS cut: {len(cut_edges)} boundaries (red)',
-                    transform=ax1.transAxes, ha='center', fontsize=9,
+            ax1.text(0.5, -0.05,
+                    f'Real Minneapolis tracts (pre-cut perimeter: {pre_cut_perimeter:.1f} km)\n'
+                    f'Red boundaries (METIS cut): {total_cut_length:.1f} km total',
+                    transform=ax1.transAxes, ha='center', fontsize=8,
                     style='italic', color='gray')
 
             # Right: Abstract graph representation with cut
