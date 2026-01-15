@@ -822,7 +822,7 @@ else:
                 label_x0 = (bounds0[0] + bounds0[2]) / 2  # Center horizontally
                 label_y0 = bounds0[3]  # Top of region
                 pop0 = sample_tracts[sample_tracts['partition'] == 0]['population'].sum() / 1000
-                ax1.text(label_x0, label_y0, f'Region 0\n{pop0:.1f}K',
+                ax1.text(label_x0, label_y0, f'0\n{pop0:.1f}K',
                         ha='center', va='bottom', fontsize=10, fontweight='bold',
                         bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
@@ -833,7 +833,7 @@ else:
                 label_x1 = (bounds1[0] + bounds1[2]) / 2  # Center horizontally
                 label_y1 = bounds1[1]  # Bottom of region
                 pop1 = sample_tracts[sample_tracts['partition'] == 1]['population'].sum() / 1000
-                ax1.text(label_x1, label_y1, f'Region 1\n{pop1:.1f}K',
+                ax1.text(label_x1, label_y1, f'1\n{pop1:.1f}K',
                         ha='center', va='top', fontsize=10, fontweight='bold',
                         bbox=dict(boxstyle='round', facecolor='white', edgecolor='black', linewidth=1))
 
@@ -944,12 +944,12 @@ else:
             pop0_total = sample_tracts[sample_tracts['partition'] == 0]['population'].sum() / 1000
             pop1_total = sample_tracts[sample_tracts['partition'] == 1]['population'].sum() / 1000
 
-            # Position labels at top (Region 0) and bottom (Region 1) of graph
-            ax2.text(2, 4.7, f'Region 0\n{pop0_total:.1f}K',
+            # Position labels at top (0) and bottom (1) of graph
+            ax2.text(2, 4.7, f'0\n{pop0_total:.1f}K',
                     ha='center', va='bottom', fontsize=10, fontweight='bold',
                     bbox=dict(boxstyle='round', facecolor='white',
                             edgecolor='black', linewidth=1))
-            ax2.text(2, -0.7, f'Region 1\n{pop1_total:.1f}K',
+            ax2.text(2, -0.7, f'1\n{pop1_total:.1f}K',
                     ha='center', va='top', fontsize=10, fontweight='bold',
                     bbox=dict(boxstyle='round', facecolor='white',
                             edgecolor='black', linewidth=1))
