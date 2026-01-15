@@ -872,6 +872,11 @@ else:
                         x2, y2 = positions[j]
 
                         length_km = edge_weights.get((i, j), 0)
+
+                        # Skip very small edges (corner adjacencies)
+                        if length_km <= 0.1:
+                            continue
+
                         is_cut = (i, j) in cut_edges or (j, i) in cut_edges
 
                         if is_cut:
