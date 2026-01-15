@@ -364,9 +364,50 @@ def main():
     # Handle --reset flag: delete output directory for fresh run
     if args.reset and output_dir.exists() and not args.print_only:
         import shutil
+        import platform
+
         print(f"\n[RESET] Deleting existing output directory: {output_dir}")
-        shutil.rmtree(output_dir)
-        print(f"[RESET] Deleted. Starting fresh run.\n")
+
+        # Windows-compatible deletion with retry logic
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                # On Windows, use rmdir /s /q for more reliable deletion
+                if platform.system() == 'Windows':
+                    import subprocess
+                    # Use Windows rmdir command which is more robust
+                    result = subprocess.run(
+                        ['cmd', '/c', 'rmdir', '/s', '/q', str(output_dir)],
+                        capture_output=True,
+                        text=True
+                    )
+                    if result.returncode == 0:
+                        break
+                    elif attempt < max_retries - 1:
+                        print(f"  Retry {attempt + 1}/{max_retries}... (waiting for file handles to close)")
+                        time.sleep(2)
+                    else:
+                        # Fall back to shutil if cmd fails
+                        shutil.rmtree(output_dir, ignore_errors=True)
+                else:
+                    shutil.rmtree(output_dir)
+                    break
+            except PermissionError as e:
+                if attempt < max_retries - 1:
+                    print(f"  Retry {attempt + 1}/{max_retries}... (waiting for file handles to close)")
+                    time.sleep(2)
+                else:
+                    print(f"[WARNING] Could not fully delete directory: {e}")
+                    print(f"[WARNING] Some files may still exist. Continuing anyway...")
+            except Exception as e:
+                print(f"[ERROR] Unexpected error during deletion: {e}")
+                break
+
+        # Verify deletion
+        if not output_dir.exists():
+            print(f"[RESET] Deleted successfully. Starting fresh run.\n")
+        else:
+            print(f"[RESET] Directory may not be fully deleted. Continuing...\n")
 
     if not args.print_only and not args.skip_states:
         output_dir.mkdir(parents=True, exist_ok=True)
