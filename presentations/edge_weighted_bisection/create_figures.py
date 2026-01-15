@@ -753,8 +753,8 @@ else:
 
                 # Add label and population at centroid
                 centroid = tract.geometry.centroid
-                pop_k = int(tract['population'] / 1000)
-                ax1.text(centroid.x, centroid.y, f'{labels[idx]}\n{pop_k}K',
+                pop_k = tract['population'] / 1000
+                ax1.text(centroid.x, centroid.y, f'{labels[idx]}\n{pop_k:.1f}K',
                         ha='center', va='center',
                         fontsize=10, fontweight='bold',
                         bbox=dict(boxstyle='round', facecolor='white',
@@ -808,8 +808,8 @@ else:
                 region0_union = part0_geoms.unary_union
                 region0_perimeter = region0_union.boundary.length / 1000
                 c0 = region0_union.centroid
-                pop0 = int(sample_tracts[sample_tracts['partition'] == 0]['population'].sum() / 1000)
-                ax1.text(c0.x, c0.y, f'Region 0\n{pop0}K pop\n{region0_perimeter:.1f} km perimeter',
+                pop0 = sample_tracts[sample_tracts['partition'] == 0]['population'].sum() / 1000
+                ax1.text(c0.x, c0.y, f'Region 0\n{pop0:.1f}K pop\n{region0_perimeter:.1f} km perimeter',
                         ha='center', va='center', fontsize=8, style='italic',
                         bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.7, edgecolor='darkblue'))
 
@@ -817,8 +817,8 @@ else:
                 region1_union = part1_geoms.unary_union
                 region1_perimeter = region1_union.boundary.length / 1000
                 c1 = region1_union.centroid
-                pop1 = int(sample_tracts[sample_tracts['partition'] == 1]['population'].sum() / 1000)
-                ax1.text(c1.x, c1.y, f'Region 1\n{pop1}K pop\n{region1_perimeter:.1f} km perimeter',
+                pop1 = sample_tracts[sample_tracts['partition'] == 1]['population'].sum() / 1000
+                ax1.text(c1.x, c1.y, f'Region 1\n{pop1:.1f}K pop\n{region1_perimeter:.1f} km perimeter',
                         ha='center', va='center', fontsize=8, style='italic',
                         bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.7, edgecolor='darkred'))
 
@@ -895,7 +895,7 @@ else:
             for i in range(n_tracts):
                 x, y = positions[i]
                 color = partition_colors[membership[i]]
-                pop_k = int(sample_tracts.iloc[i]['population'] / 1000)
+                pop_k = sample_tracts.iloc[i]['population'] / 1000
 
                 circle = Circle((x, y), 0.25, facecolor=color,
                               edgecolor='black', linewidth=2.5, alpha=0.8, zorder=4)
@@ -904,7 +904,7 @@ else:
                 # Put label and population inside node (stacked vertically)
                 ax2.text(x, y + 0.05, labels[i], ha='center', va='center',
                         fontsize=11, fontweight='bold', zorder=5)
-                ax2.text(x, y - 0.08, f'{pop_k}K', ha='center', va='center',
+                ax2.text(x, y - 0.08, f'{pop_k:.1f}K', ha='center', va='center',
                         fontsize=7, style='italic', color='black', zorder=5)
 
             ax2.set_xlim(-0.5, 4.5)
