@@ -19,7 +19,7 @@ import pandas as pd
 
 def load_district_data(state_dir):
     """Load district cities data for a state."""
-    cities_file = state_dir / 'district_cities.csv'
+    cities_file = state_dir / 'data' / 'district_cities.csv'
     if not cities_file.exists():
         return None
 
