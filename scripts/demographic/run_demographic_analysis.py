@@ -87,7 +87,7 @@ def main():
             continue
 
         # Check if demographic analysis already exists
-        demo_dir = state_dir / 'demographic_analysis'
+        demo_dir = state_dir / 'demographic'
         demo_file = demo_dir / 'district_demographics.csv'
 
         if demo_file.exists():

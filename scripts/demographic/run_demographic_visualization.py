@@ -83,15 +83,15 @@ def main():
             report_progress(f"Demographic Visualization ({i+1}/{len(state_dirs)}) - {state_name}")
 
         # Check if demographic analysis exists (required)
-        demo_analysis_dir = state_dir / 'demographic_analysis'
-        demo_file = demo_analysis_dir / 'district_demographics.csv'
+        demo_dir = state_dir / 'demographic'
+        demo_file = demo_dir / 'district_demographics.csv'
 
         if not demo_file.exists():
             skipped.append(state_name)
             continue
 
         # Check if demographic maps already exist
-        maps_dir = demo_analysis_dir / 'maps'
+        maps_dir = demo_dir / 'maps'
         gender_map = maps_dir / 'gender_balance.png'
         majority_map = maps_dir / 'majority_race.png'
         diversity_map = maps_dir / 'diversity_index.png'
