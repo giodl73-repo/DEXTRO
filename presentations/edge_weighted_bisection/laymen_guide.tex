@@ -1,0 +1,533 @@
+\documentclass[12pt]{article}
+
+% Packages
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{tikz}
+
+% Title
+\title{\textbf{Drawing Fair Congressional Districts\\Using Computer Algorithms}}
+\author{A Guide for Everyone}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Every 10 years after the census, states must redraw congressional district boundaries. This process, called redistricting, is often manipulated by politicians to favor their party—a practice known as gerrymandering. This document explains how we can use computer algorithms to draw district maps fairly and transparently, without human bias. We'll walk through the concepts using real examples from Minnesota and Alabama, showing how a technique called \textit{edge-weighted recursive bisection} can automatically create compact, fair districts.
+\end{abstract}
+
+\tableofcontents
+
+\section{The Problem: Drawing 435 Districts}
+
+\subsection{Why Do We Need Congressional Districts?}
+
+The United States House of Representatives has 435 members. Each member represents one congressional district. But where do these districts come from?
+
+Every 10 years, the U.S. Census counts everyone in the country. Based on population changes, some states gain representatives and some lose them. This is called \textbf{apportionment}—determining how many districts each state gets. For example, after the 2020 Census:
+\begin{itemize}
+\item California has 52 districts (most populous state)
+\item Texas has 38 districts
+\item Minnesota has 8 districts
+\item Alabama has 7 districts
+\item Alaska has just 1 district (least populous)
+\end{itemize}
+
+Once we know how many districts a state gets, someone has to actually draw the boundaries. This is where things get tricky.
+
+\subsection{What's Gerrymandering?}
+
+\textbf{Gerrymandering} is when district boundaries are manipulated to give one political party an unfair advantage. Politicians can pack opponents into a few districts or spread them thin across many districts to dilute their voting power.
+
+The term comes from Massachusetts Governor Elbridge Gerry, who in 1812 approved a district so bizarrely shaped it looked like a salamander—thus, "gerrymander."
+
+\textbf{Classic gerrymandering techniques:}
+\begin{enumerate}
+\item \textbf{Packing}: Concentrate opposition voters into a few districts they win overwhelmingly, wasting their votes
+\item \textbf{Cracking}: Spread opposition voters across many districts so they never form a majority
+\end{enumerate}
+
+\textbf{The result?} Districts that look like weird, snaking shapes that clearly don't respect geographic compactness or communities.
+
+\subsection{What Makes a "Good" District?}
+
+The Constitution requires:
+\begin{enumerate}
+\item \textbf{Equal population}: Each district should have approximately the same number of people (about 760,000 in 2020)
+\item \textbf{Contiguity}: Districts must be connected—you should be able to walk from any point in the district to any other point without leaving the district
+\end{enumerate}
+
+Beyond these requirements, most people agree good districts should be:
+\begin{itemize}
+\item \textbf{Compact}: Reasonably circular or square-shaped, not bizarre squiggly lines
+\item \textbf{Fair}: Not systematically favoring one party
+\item \textbf{Respecting communities}: Not unnecessarily splitting cities, counties, or neighborhoods
+\end{itemize}
+
+\textbf{Our goal:} Can we use computers to draw compact, fair districts automatically?
+
+\section{The Solution: Thinking About Graphs}
+
+\subsection{What's a Graph? (Not the Math Class Kind!)}
+
+Before we can explain our algorithm, we need to understand what a \textbf{graph} is in computer science. Don't worry—it's not the x-y coordinate graphs from math class!
+
+\textbf{A graph is simply:}
+\begin{itemize}
+\item A collection of \textbf{vertices} (also called nodes or points)
+\item \textbf{Edges} (connections) between those vertices
+\end{itemize}
+
+\textbf{Example:} Think of a social network:
+\begin{itemize}
+\item Each person is a \textbf{vertex}
+\item If two people are friends, there's an \textbf{edge} connecting them
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.5]
+\node[circle,draw,fill=blue!20] (A) at (0,2) {Alice};
+\node[circle,draw,fill=blue!20] (B) at (2,2) {Bob};
+\node[circle,draw,fill=blue!20] (C) at (0,0) {Carol};
+\node[circle,draw,fill=blue!20] (D) at (2,0) {Dave};
+
+\draw[thick] (A) -- (B);
+\draw[thick] (A) -- (C);
+\draw[thick] (B) -- (D);
+\draw[thick] (C) -- (D);
+\draw[thick] (B) -- (C);
+\end{tikzpicture}
+\caption{A simple graph showing friendships. Alice is friends with Bob and Carol. Carol is friends with everyone!}
+\end{figure}
+
+\subsection{How Does This Relate to Redistricting?}
+
+For redistricting, we create a graph where:
+\begin{itemize}
+\item Each \textbf{census tract} is a vertex
+\item If two tracts touch each other geographically, there's an \textbf{edge} between them
+\item Each vertex has a \textbf{weight} equal to its population
+\end{itemize}
+
+\textbf{What's a census tract?}
+\begin{itemize}
+\item A small geographic area (typically 1,200-8,000 people)
+\item Designed by the Census Bureau
+\item About 85,000 tracts nationwide
+\item Shapes follow streets, rivers, railroads, etc.
+\end{itemize}
+
+\textbf{Why use graphs?}
+\begin{enumerate}
+\item Computers are extremely good at solving graph problems
+\item We preserve all geographic relationships
+\item Contiguity is automatic (connected districts = connected subgraphs)
+\item We can apply powerful algorithms that were originally developed for other fields
+\end{enumerate}
+
+\subsection{Graph Partitioning: The Core Problem}
+
+\textbf{Redistricting is a graph partitioning problem.} We need to:
+\begin{enumerate}
+\item Split the graph into $k$ groups (where $k$ = number of districts)
+\item Make sure each group has roughly equal total population
+\item Make sure each group is connected
+\item Try to make the splits as "clean" as possible
+\end{enumerate}
+
+This is exactly what engineers do when dividing computational workloads across processors, or what logistics companies do when planning delivery routes. We're borrowing a proven technique!
+
+\section{Recursive Bisection: Splitting Repeatedly}
+
+\subsection{The Basic Idea}
+
+\textbf{Recursive bisection} means "split in half, over and over again." It's a "divide and conquer" strategy:
+
+\begin{enumerate}
+\item Start with the whole state
+\item \textbf{Bisect} (split) it into two parts with equal population
+\item Take each part and split it in half again
+\item Keep going until you have the right number of districts
+\end{enumerate}
+
+\textbf{Example:} If you need 8 districts:
+\begin{itemize}
+\item Round 1: 1 $\rightarrow$ 2 regions
+\item Round 2: 2 $\rightarrow$ 4 regions
+\item Round 3: 4 $\rightarrow$ 8 districts (done!)
+\end{itemize}
+
+Notice that $8 = 2^3$ (8 is 2 to the power of 3). We need exactly 3 rounds.
+
+\subsection{What About Odd Numbers?}
+
+What if a state has 7 districts, like Alabama? Or 52 districts, like California?
+
+\textbf{The algorithm handles this automatically!}
+
+For Alabama (7 districts):
+\begin{itemize}
+\item Round 1: Split into 4 and 3 districts (not equal, but close)
+\item Round 2: Split the 4-region into 2+2, and the 3-region into 2+1
+\item Round 3: Split all 2-regions into 1+1
+\item Result: Seven individual districts!
+\end{itemize}
+
+The algorithm figures out the best way to do these unequal splits to keep things balanced.
+
+\subsection{The METIS Tool}
+
+At each step, we need to actually perform the split—dividing the graph into two parts. This is where a tool called \textbf{METIS} comes in.
+
+\textbf{METIS:}
+\begin{itemize}
+\item A graph partitioning software library
+\item Developed at the University of Minnesota
+\item Used in engineering, scientific computing, and many other fields
+\item Very fast and very good at finding high-quality partitions
+\end{itemize}
+
+We give METIS:
+\begin{itemize}
+\item The current graph (all the census tracts in a region)
+\item How many people should be in each half
+\item Instructions to keep each part connected
+\end{itemize}
+
+METIS gives us back:
+\begin{itemize}
+\item Two groups of tracts
+\item Each with the right population
+\item Each forming a connected region
+\item With a "good" boundary between them (more on this next!)
+\end{itemize}
+
+\section{The Key Innovation: Edge Weights}
+
+\subsection{Baseline Approach: Treating Everything Equally}
+
+In the simplest version of recursive bisection (which we call \textit{baseline} or \textit{unweighted}), all edges in the graph are treated equally. METIS tries to minimize the \textbf{number of edges cut}.
+
+\textbf{Why is this a problem?}
+
+Imagine three census tracts:
+\begin{itemize}
+\item Tract A and Tract B share a tiny 150-meter boundary (maybe they just touch at a corner)
+\item Tract A and Tract C share a huge 12,500-meter boundary (12.5 km!)
+\item Tract B and Tract C share a 200-meter boundary
+\end{itemize}
+
+In unweighted mode, cutting between A and B (150m) costs the same as cutting between A and C (12.5km). Both are "1 edge cut."
+
+METIS might decide to separate A from C, adding 12.5 km of boundary length to our districts. That's not ideal if we care about compactness!
+
+\subsection{Our Innovation: Weighting Edges by Real Length}
+
+\textbf{Edge-weighted recursive bisection} solves this problem by giving each edge a \textbf{weight} equal to its actual boundary length (in meters).
+
+Now:
+\begin{itemize}
+\item Edge A-B has weight 150
+\item Edge A-C has weight 12,500
+\item Edge B-C has weight 200
+\end{itemize}
+
+METIS now tries to minimize the \textbf{total weight of edges cut}. Cutting between A and C costs 83 times more than cutting between A and B!
+
+\textbf{The result:} METIS strongly prefers to cut short boundaries, not long ones.
+
+\subsection{Why This Matters for Compactness}
+
+\textbf{Key insight:} Compact shapes have shorter perimeters!
+
+Think about it:
+\begin{itemize}
+\item A \textbf{circle} is the most compact shape—it has the shortest perimeter for a given area
+\item A \textbf{long, skinny snake shape} has a much longer perimeter for the same area
+\end{itemize}
+
+By minimizing total perimeter (total boundary length), we automatically get more compact districts!
+
+\textbf{Measuring compactness:} We use the \textbf{Polsby-Popper score}:
+\[
+\text{Polsby-Popper} = \frac{4\pi \times \text{Area}}{\text{Perimeter}^2}
+\]
+
+\begin{itemize}
+\item Perfect circle: Polsby-Popper = 1.0
+\item Perfect square: Polsby-Popper $\approx$ 0.79
+\item Weird gerrymandered district: Polsby-Popper $<$ 0.2
+\end{itemize}
+
+Higher scores = more compact districts.
+
+\subsection{Computing Boundary Lengths}
+
+How do we actually compute the boundary length between two adjacent tracts?
+
+\begin{enumerate}
+\item \textbf{Load geometries}: Get the actual geographic shapes from Census shapefiles
+\item \textbf{Project to correct coordinates}: Transform to a coordinate system with meters (not latitude/longitude degrees)
+\item \textbf{Find the intersection}: Where do the two tract boundaries overlap?
+\item \textbf{Measure the length}: Calculate the length of the shared boundary in meters
+\end{enumerate}
+
+\textbf{Special case:} What if two tracts only touch at a single point (like corners)? We give that edge a tiny weight (0.1 meters) so it's almost free to cut.
+
+\textbf{Water crossings:} Some states have islands or water gaps (Hawaii, Alaska, Michigan, etc.). For these, we create artificial "bridge" edges with reasonable weights to allow necessary crossings.
+
+\section{Real Examples: Minnesota and Alabama}
+
+\subsection{Minnesota: 8 Districts}
+
+Minnesota gets 8 congressional districts after the 2020 Census. Since $8 = 2^3$, this is a "perfect" case for recursive bisection—three rounds of equal splits.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{../../papers/03_combined_recursive_bisection/figures/minnesota_round_1_2_regions.png}
+\includegraphics[width=0.3\textwidth]{../../papers/03_combined_recursive_bisection/figures/minnesota_round_2_4_regions.png}
+\includegraphics[width=0.3\textwidth]{../../papers/03_combined_recursive_bisection/figures/minnesota_round_3_8_regions.png}
+\caption{Minnesota's three bisection rounds: 1$\rightarrow$2$\rightarrow$4$\rightarrow$8. Each split creates two roughly equal regions. Final districts are compact with smooth, regular boundaries.}
+\end{figure}
+
+\textbf{What happened?}
+\begin{itemize}
+\item \textbf{Round 1}: Split Minnesota roughly in half (north-south)
+\item \textbf{Round 2}: Split each half again (creating 4 quadrants)
+\item \textbf{Round 3}: Split each quadrant (creating 8 districts)
+\end{itemize}
+
+\textbf{Results:}
+\begin{itemize}
+\item Mean Polsby-Popper: 0.468 (very compact!)
+\item Compare to baseline (unweighted): 0.288 (62\% improvement)
+\item Compare to actual enacted map: 0.287 (63\% improvement!)
+\end{itemize}
+
+Our algorithm beats both the baseline approach AND the map that humans actually drew!
+
+\subsection{Alabama: 7 Districts}
+
+Alabama gets 7 congressional districts. Seven is not a power of 2, so we need unequal splits.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{../../papers/03_combined_recursive_bisection/figures/alabama_round_1_2_regions.png}
+\includegraphics[width=0.3\textwidth]{../../papers/03_combined_recursive_bisection/figures/alabama_round_2_4_regions.png}
+\includegraphics[width=0.3\textwidth]{../../papers/03_combined_recursive_bisection/figures/alabama_round_3_7_regions.png}
+\caption{Alabama's three bisection rounds with unequal splits to reach 7 districts. Despite the odd number, edge-weighted bisection still produces compact districts.}
+\end{figure}
+
+\textbf{What happened?}
+\begin{itemize}
+\item \textbf{Round 1}: Split into regions targeting 4 and 3 districts
+\item \textbf{Round 2}: Split the 4-region into 2+2, split the 3-region into 2+1
+\item \textbf{Round 3}: Split all remaining 2-regions into 1+1
+\end{itemize}
+
+\textbf{Results:}
+\begin{itemize}
+\item Mean Polsby-Popper: 0.369 (good compactness)
+\item Compare to baseline (unweighted): 0.246 (50\% improvement)
+\item Compare to actual enacted map: 0.297 (24\% improvement)
+\end{itemize}
+
+Even with an odd number of districts, our algorithm produces compact results!
+
+\subsection{Why These Examples Matter}
+
+Minnesota and Alabama demonstrate that edge-weighted recursive bisection works well for both:
+\begin{itemize}
+\item \textbf{Even district counts} (powers of 2): Perfect balanced splitting
+\item \textbf{Odd district counts} (non-powers of 2): Algorithm adapts automatically
+\end{itemize}
+
+The key insight: By encoding real geographic information (boundary lengths) into the graph, METIS can make smart decisions that lead to compact districts.
+
+\section{National Results: All 50 States}
+
+\subsection{Overall Performance}
+
+We ran our algorithm on all 50 states using 2020 Census data, creating all 435 congressional districts. Here's how the three approaches compare:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Method} & \textbf{Mean Polsby-Popper} & \textbf{vs. Baseline} \\
+\midrule
+Baseline (Unweighted) & 0.235 & --- \\
+\textbf{Edge-Weighted} & \textbf{0.367} & \textcolor{green}{+56\%} \\
+Enacted 2020 Maps & 0.305 & +30\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key findings:}
+\begin{itemize}
+\item Edge-weighted bisection is 56\% more compact than baseline
+\item Our algorithm is 20\% more compact than actual enacted districts
+\item In \textbf{37 out of 50 states}, our algorithm beats the enacted maps
+\end{itemize}
+
+\subsection{Where We See the Biggest Improvements}
+
+The algorithm performs especially well in states where partisan legislatures drew the maps:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{State} & \textbf{Our Score} & \textbf{Improvement vs. Enacted} \\
+\midrule
+Illinois & 0.311 & +174\% \\
+Louisiana & 0.379 & +104\% \\
+New Hampshire & 0.518 & +102\% \\
+Maryland & 0.305 & +99\% \\
+North Carolina & 0.369 & +76\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These are precisely the states where human mapmakers were suspected of gerrymandering!
+
+\subsection{Cross-Census Validation}
+
+An important test: Does our algorithm perform consistently across different census years, or does it only work for 2020?
+
+\textbf{We tested on 2010 Census data:}
+\begin{itemize}
+\item 2010 algorithm results: Mean PP = 0.320
+\item 2020 algorithm results: Mean PP = 0.367
+\item Only 10.3\% variation between census years!
+\end{itemize}
+
+This consistency provides strong evidence that \textbf{geography drives our algorithm, not politics}. The algorithm produces similarly compact districts regardless of who lives where.
+
+\section{Why This Matters}
+
+\subsection{Advantages of Algorithmic Redistricting}
+
+\textbf{1. Eliminates partisan manipulation}
+\begin{itemize}
+\item No human has control over where lines are drawn
+\item Impossible to favor one party over another
+\item Removes the incentive for politicians to draw favorable maps
+\end{itemize}
+
+\textbf{2. Complete transparency}
+\begin{itemize}
+\item Anyone can download the code and run it
+\item Every step is documented and reproducible
+\item No "smoke-filled room" decisions
+\end{itemize}
+
+\textbf{3. Provides a neutral baseline}
+\begin{itemize}
+\item Even if we don't use algorithmic maps, we can compare them to human-drawn maps
+\item Significant deviations from the algorithmic baseline suggest possible gerrymandering
+\item Creates an objective standard for measuring fairness
+\end{itemize}
+
+\textbf{4. Speed and efficiency}
+\begin{itemize}
+\item Runs in minutes on a laptop
+\item No need for months of legislative wrangling
+\item Can quickly test different scenarios or parameters
+\end{itemize}
+
+\subsection{Limitations and Trade-offs}
+
+Our algorithm is powerful, but it's not perfect. Important limitations:
+
+\textbf{1. No consideration of communities}
+\begin{itemize}
+\item Pure geography-based approach
+\item Doesn't know about cities, counties, neighborhoods
+\item Might split a city that could be kept together
+\end{itemize}
+
+\textbf{2. No attempt at competitive districts}
+\begin{itemize}
+\item Some people believe districts should be competitive (close elections)
+\item Our algorithm only cares about compactness
+\item Might create very safe districts for one party or the other
+\end{itemize}
+
+\textbf{3. Doesn't ensure minority representation}
+\begin{itemize}
+\item The Voting Rights Act requires some districts where minority voters can elect candidates of their choice
+\item Pure algorithmic approach might not create these districts naturally
+\item Would need additional constraints to satisfy legal requirements
+\end{itemize}
+
+\textbf{4. Still requires human judgment}
+\begin{itemize}
+\item Should we use tract-level or block-level data?
+\item What tolerance for population deviation?
+\item How should we handle water crossings?
+\end{itemize}
+
+\subsection{The Path Forward}
+
+Algorithmic redistricting isn't a complete solution, but it's a valuable tool:
+
+\begin{enumerate}
+\item \textbf{Baseline for measuring gerrymandering}: Compare enacted maps to algorithmic maps. Large deviations suggest manipulation.
+
+\item \textbf{Starting point for human mapmakers}: Use algorithmic maps as a first draft, then adjust for communities and other factors.
+
+\item \textbf{Backup option}: If politicians can't agree on a map, use the algorithmic map as a neutral default.
+
+\item \textbf{Public education}: Help people understand what "fair" districts could look like.
+\end{enumerate}
+
+The goal isn't to replace human judgment entirely—it's to \textbf{remove opportunities for partisan abuse} and \textbf{establish objective standards}.
+
+\section{Conclusion}
+
+Congressional redistricting is a challenging problem with major implications for American democracy. While the Constitution requires equal population and contiguity, it doesn't specify how to achieve compactness or prevent gerrymandering.
+
+\textbf{Our contribution:} We've shown that by representing states as graphs and using edge weights equal to real boundary lengths, we can automatically create compact districts that often exceed the quality of human-drawn maps.
+
+\textbf{The technique:}
+\begin{itemize}
+\item \textbf{Recursive bisection}: Split in half repeatedly
+\item \textbf{METIS graph partitioning}: Powerful algorithm for finding good splits
+\item \textbf{Edge weights}: Encode real geographic information to optimize compactness
+\end{itemize}
+
+\textbf{The results:}
+\begin{itemize}
+\item 56\% improvement over baseline unweighted approach
+\item 20\% improvement over enacted 2020 congressional districts
+\item Particularly strong performance in partisan-drawn states
+\item Consistent performance across different census years
+\end{itemize}
+
+\textbf{The implications:} Algorithmic redistricting can provide objectivity, transparency, and a neutral baseline for measuring fairness. While not a complete solution, it's a significant step toward reducing gerrymandering and restoring public trust in the redistricting process.
+
+\section*{For More Information}
+
+\textbf{Want to learn more or try it yourself?}
+\begin{itemize}
+\item \textbf{Full technical paper}: See \texttt{papers/03\_combined\_recursive\_bisection/}
+\item \textbf{Source code}: Available on GitHub
+\item \textbf{Interactive maps}: Visit our web dashboard to explore districts for all 50 states
+\item \textbf{Questions?} Contact the author
+\end{itemize}
+
+\textbf{Key references:}
+\begin{itemize}
+\item METIS graph partitioning: \url{http://glaros.dtc.umn.edu/gkhome/metis/metis/overview}
+\item U.S. Census Bureau redistricting data: \url{https://www.census.gov/programs-surveys/decennial-census/about/rdo.html}
+\item Polsby-Popper compactness measure: Standard metric in redistricting research
+\end{itemize}
+
+\end{document}
