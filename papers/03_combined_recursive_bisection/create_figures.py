@@ -37,21 +37,21 @@ if not pipeline_output_dir.exists():
 else:
     # Minnesota round maps (3 rounds -> 8 districts)
     minnesota_rounds = [
-        ('outputs/us_2020_v1/states/minnesota/maps/rounds/round_01.png',
+        ('../../outputs/us_2020_v1/states/minnesota/maps/rounds/round_01.png',
          'minnesota_round_1_2_regions.png'),
-        ('outputs/us_2020_v1/states/minnesota/maps/rounds/round_02.png',
+        ('../../outputs/us_2020_v1/states/minnesota/maps/rounds/round_02.png',
          'minnesota_round_2_4_regions.png'),
-        ('outputs/us_2020_v1/states/minnesota/maps/rounds/round_03.png',
+        ('../../outputs/us_2020_v1/states/minnesota/maps/rounds/round_03.png',
          'minnesota_round_3_8_regions.png'),
     ]
 
     # Alabama round maps (3 rounds -> 7 districts)
     alabama_rounds = [
-        ('outputs/us_2020_v1/states/alabama/maps/rounds/round_01.png',
+        ('../../outputs/us_2020_v1/states/alabama/maps/rounds/round_01.png',
          'alabama_round_1_2_regions.png'),
-        ('outputs/us_2020_v1/states/alabama/maps/rounds/round_02.png',
+        ('../../outputs/us_2020_v1/states/alabama/maps/rounds/round_02.png',
          'alabama_round_2_4_regions.png'),
-        ('outputs/us_2020_v1/states/alabama/maps/rounds/round_03.png',
+        ('../../outputs/us_2020_v1/states/alabama/maps/rounds/round_03.png',
          'alabama_round_3_7_regions.png'),
     ]
 
@@ -86,7 +86,7 @@ else:
 
     result = subprocess.run(
         [sys.executable, str(script_path),
-         '--comparison-csv', str(comparison_csv),
+         '--input-file', str(comparison_csv),
          '--output-dir', str(figures_dir)],
         capture_output=True,
         text=True
