@@ -2,7 +2,7 @@
 
 All notable changes to the Congressional Redistricting project.
 
-**Last Updated**: January 14, 2026
+**Last Updated**: January 15, 2026
 
 ## Related Documentation
 
@@ -25,6 +25,36 @@ All notable changes to the Congressional Redistricting project.
 - Improved progress bar UX with state-specific status messages
 - Map boundaries: thin white tract lines + thick black district overlays
 - Default DPI changed from 300 to 150 for better performance
+
+## 2026-01-15 - Enhancement 18: Figure Quality Improvement
+
+### Changed
+- Real census tract examples (appendix) now use strict validation criteria
+- Ratio accuracy: Within 0.5% of target (was unvalidated)
+- Compactness requirement: Both regions >= 0.25 Polsby-Popper score
+- Retry logic: Up to 26 attempts to find optimal examples (25 retries)
+- Region labels now positioned outside combined boundary (no overlap with tracts)
+- Label positioning adapts to horizontal vs vertical splits
+
+### Removed
+- Prime number references from laymen_guide.tex (unnecessary complexity)
+- Removed "(sum=X)" from subsection titles
+- Removed "Mathematical structure" bullet point from summary
+
+### Improved
+- Tract count optimized: 12 tracts provides best balance of clarity and validation
+- All 6 examples now meet strict validation criteria:
+  - Phoenix: 0.00% error (perfect ratio match)
+  - Minneapolis: 0.10% error
+  - Los Angeles: 0.11% error
+  - Atlanta: 0.15% error
+  - Miami: 0.37% error
+  - Houston: 0.47% error
+- Compactness scores range from 0.25 to 0.42
+
+### Files Modified
+- `presentations/edge_weighted_bisection/create_appendix_examples.py` - Validation and retry logic
+- `presentations/edge_weighted_bisection/laymen_guide.tex` - Documentation clarity
 
 ## 2026-01-14 - Enhancement 17: Artifact Naming Standardization
 

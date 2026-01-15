@@ -244,6 +244,8 @@ METIS now tries to minimize the \textbf{total weight of edges cut}. Cutting betw
 
 \textbf{The result:} METIS strongly prefers to cut short boundaries, not long ones.
 
+\textbf{Important note on population balance:} METIS treats population equality as a \textit{hard constraint}, not a trade-off. The algorithm \textit{must} produce partitions where each region meets the target population (within a small tolerance, typically $\pm$1\%). Only after satisfying this constraint does METIS minimize boundary length. It's not "balancing" two objectives—it's \textit{minimizing boundaries subject to equal population}. This is a constrained optimization problem, not a multi-objective one. (See the technical paper for details on METIS's multilevel algorithm and refinement process.)
+
 \subsection{Why This Matters for Compactness}
 
 \textbf{Key insight:} Compact shapes have shorter perimeters!
@@ -292,7 +294,7 @@ Before we dive into the algorithm details, let's see exactly how real census tra
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/real_tracts_to_graph.png}
+\includegraphics[width=0.95\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50.png}
 \caption{\textbf{Real Census Tracts to Graph}: On the left, actual census tracts from Hennepin County, Minnesota (Minneapolis area) with their irregular geographic shapes. Each tract is labeled A-F and colored differently. Red lines highlight some of the shared boundaries between adjacent tracts. On the right, the same tracts represented as an abstract graph—each tract becomes a node (circle), each shared boundary becomes an edge (line), and the edge thickness shows the boundary length in kilometers. This is what METIS sees when partitioning.}
 \end{figure}
 
@@ -304,7 +306,7 @@ Now let's see the difference between graphs with and without boundary informatio
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/edge_weights_example.png}
+\includegraphics[width=0.9\textwidth]{../../outputs/figures/schematic/edge_weights_example.png}
 \caption{\textbf{Unweighted vs Edge-Weighted Graphs}: On the left, all edges have weight 1 (no boundary information). On the right, edge weights reflect actual boundary lengths in kilometers. Thicker red edges represent longer boundaries that are expensive to cut.}
 \end{figure}
 
@@ -316,7 +318,7 @@ When METIS partitions the graph, it "cuts" edges to separate the graph into regi
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/graph_with_cut.png}
+\includegraphics[width=0.9\textwidth]{../../outputs/figures/schematic/graph_with_cut.png}
 \caption{\textbf{Graph Partitioning with Cut Edges}: The dashed red lines show which edges METIS decided to cut. Tracts in Region 0 (blue) and Region 1 (red) are separated by removing these 3 edges. The algorithm chose these specific cuts to balance population while minimizing total boundary length.}
 \end{figure}
 
@@ -328,7 +330,7 @@ Here's a clearer view of what the partitioning operation achieves:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/before_after_cut.png}
+\includegraphics[width=0.95\textwidth]{../../outputs/figures/schematic/before_after_cut.png}
 \caption{\textbf{Partitioning Transformation}: Before (left): One connected region. After (right): Two balanced districts separated by cutting only 2 short boundaries (marked with red X). The cut weight is minimized, leading to compact district shapes.}
 \end{figure}
 
@@ -399,7 +401,7 @@ The algorithm starts with all of Minnesota as a single region containing approxi
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/minnesota_round_1_2_regions.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/figures/round_progression/minnesota_round_1.png}
 \caption{\textbf{Minnesota Round 1}: One state becomes two regions. The algorithm found a roughly north-south split that balances population while minimizing the shared boundary length. This creates a very clean division.}
 \end{figure}
 
@@ -418,7 +420,7 @@ Now we have 2 regions, each needing 4 districts. The algorithm recursively split
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/minnesota_round_2_4_regions.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/figures/round_progression/minnesota_round_2.png}
 \caption{\textbf{Minnesota Round 2}: Two regions become four. Each of the two regions from Round 1 is split in half. Notice how each split follows compact boundaries—no weird tendrils or long corridors.}
 \end{figure}
 
@@ -438,7 +440,7 @@ The final round splits each of the 4 regions into 2 districts, giving us our tar
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/minnesota_round_3_8_regions.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/figures/round_progression/minnesota_round_3.png}
 \caption{\textbf{Minnesota Round 3}: Four regions become eight final districts. This is the completed congressional district map. Each district is compact with smooth boundaries that follow natural geographic features.}
 \end{figure}
 
@@ -469,7 +471,7 @@ Alabama's population is approximately 5.0 million people. With 7 districts, each
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/alabama_round_1_2_regions.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/figures/round_progression/alabama_round_1.png}
 \caption{\textbf{Alabama Round 1}: One state becomes two unequally-sized regions. The larger region (blue, northern) will get 4 districts, while the smaller region (red, southern) will get 3 districts. Despite the unequal split, both regions are geographically compact.}
 \end{figure}
 
@@ -489,7 +491,7 @@ Now we recursively split each region. The 4-district region splits into 2+2. The
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/alabama_round_2_4_regions.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/figures/round_progression/alabama_round_2.png}
 \caption{\textbf{Alabama Round 2}: Two regions become four. The unequal split created one complete district (smallest region in the south) while the other three regions each need one more split to reach their final districts.}
 \end{figure}
 
@@ -509,7 +511,7 @@ The final round splits the three remaining 2-district regions, giving us all 7 c
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/figures/alabama_round_3_7_regions.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/figures/round_progression/alabama_round_3.png}
 \caption{\textbf{Alabama Round 3}: Four regions become seven final districts. Despite the odd number requiring unequal splits, all districts are compact with clean boundaries. The recursive approach gracefully handled the non-power-of-2 case.}
 \end{figure}
 
@@ -709,5 +711,119 @@ Congressional redistricting is a challenging problem with major implications for
 \item U.S. Census Bureau redistricting data: \url{https://www.census.gov/programs-surveys/decennial-census/about/rdo.html}
 \item Polsby-Popper compactness measure: Standard metric in redistricting research
 \end{itemize}
+
+\clearpage
+\appendix
+
+\section{More Examples: Different Cities and Population Ratios}
+
+In the main text, we showed how our algorithm works with a 50-50 population split. But real congressional districts often need different population ratios—especially in states with odd numbers of districts or varying population densities.
+
+Below are six examples showing how the algorithm handles different population splits across major U.S. metropolitan areas. Each example uses 12 real census tracts and shows:
+
+\begin{itemize}
+\item \textbf{Left panel}: Geographic census tracts colored by partition
+\item \textbf{Right panel}: Abstract graph representation with edge weights
+\item \textbf{Red lines/edges}: METIS-selected cuts that minimize total boundary length
+\item \textbf{Yellow labels}: Boundary lengths (in kilometers)
+\item \textbf{Blue/Red regions}: Two partitions with population totals
+\end{itemize}
+
+\textbf{Note on example selection}: These examples were specifically chosen to demonstrate both accurate population ratios (within 0.5\% of target) and good compactness (Polsby-Popper score $\geq$ 0.25 for both regions). To find these particularly clean examples with only 12 tracts, we tested multiple starting locations in each metropolitan area and selected the best result. In practice, state-level redistricting works with hundreds or thousands of census tracts, which provides much more flexibility for the algorithm to achieve precise population targets while maintaining compact, contiguous districts. These small examples are designed for pedagogical clarity, not to represent the full complexity of real redistricting.
+
+\subsection{Minneapolis, MN: 50-50 Split (1:1)}
+
+This is the example from the main text. Equal population split (1:1 ratio).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50.png}
+\end{figure}
+
+\clearpage
+
+\subsection{Houston, TX: 60-40 Split (3:2)}
+
+A 3:2 ratio shows moderate population difference. The algorithm finds compact boundaries despite the imbalance.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../outputs/figures/real_tracts_examples/houston_60_40.png}
+\end{figure}
+
+\clearpage
+
+\subsection{Los Angeles, CA: 43-57 Split (3:4)}
+
+A 3:4 ratio demonstrates a slight majority. Notice how METIS adjusts the partition to meet the target population.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../outputs/figures/real_tracts_examples/los_angeles_43_57.png}
+\end{figure}
+
+\clearpage
+
+\subsection{Atlanta, GA: 45-55 Split (5:6)}
+
+A 5:6 ratio is close to equal but not quite. This shows the algorithm's precision in meeting exact population targets.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../outputs/figures/real_tracts_examples/atlanta_45_55.png}
+\end{figure}
+
+\clearpage
+
+\subsection{Phoenix, AZ: 46-54 Split (6:7)}
+
+A 6:7 ratio is nearly balanced. Even with this close split, the algorithm finds an optimal cut.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../outputs/figures/real_tracts_examples/phoenix_46_54.png}
+\end{figure}
+
+\clearpage
+
+\subsection{Miami, FL: 47-53 Split (8:9)}
+
+An 8:9 ratio is very close to equal. This demonstrates the algorithm's ability to handle nearly-equal splits.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{../../outputs/figures/real_tracts_examples/miami_47_53.png}
+\end{figure}
+
+\clearpage
+
+\subsection{Summary of Examples}
+
+These six examples demonstrate several important points:
+
+\begin{enumerate}
+\item \textbf{Flexibility}: The algorithm works with any population ratio, from equal (50-50) to close (47-53) to moderate (60-40).
+
+\item \textbf{Consistency}: Whether the split is balanced or imbalanced, METIS always minimizes boundary length.
+
+\item \textbf{Real geography matters}: Edge weights based on actual boundary lengths produce geographically sensible districts.
+
+\item \textbf{Automatic adaptation}: The algorithm adjusts the cut location to meet population targets while staying compact.
+
+\item \textbf{Contiguity preserved}: All splits maintain connected regions, even with challenging population ratios.
+\end{enumerate}
+
+In real redistricting, states don't always divide evenly. Texas needs 38 districts, Florida needs 28, and many states have odd counts. Our algorithm handles all of these cases automatically, finding the best cut for whatever population ratio is needed at each step of the recursive bisection process.
+
+\textbf{The power of this approach}: No manual tweaking required. Specify the population target, and METIS finds the most compact way to achieve it.
+
+\textbf{Scale matters}: It's important to note that these appendix examples use only 12 census tracts for visual clarity. Real state-level redistricting works with far more data:
+\begin{itemize}
+\item California has over 9,000 census tracts
+\item Texas has over 5,000 census tracts
+\item Even small states like Delaware have 200+ tracts
+\end{itemize}
+
+With hundreds or thousands of tracts available, the algorithm has much more flexibility to find solutions that simultaneously meet strict population targets, maintain high compactness, and preserve natural geographic boundaries. The curated examples shown here demonstrate the \textit{principles} of edge-weighted bisection in an easily understandable format, but they should not be interpreted as representing the full capability or typical performance of the algorithm when applied to complete state redistricting.
 
 \end{document}
