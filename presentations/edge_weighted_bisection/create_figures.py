@@ -786,14 +786,15 @@ else:
                 boundary = geom_i.intersection(geom_j.boundary)
                 if not boundary.is_empty:
                     gpd.GeoSeries([boundary]).plot(ax=ax1, color='red', linewidth=4, alpha=0.9, zorder=10)
-                    # Label cut edges
+                    # Label cut edges (zorder=11 to appear on top of red line)
                     mid_point = boundary.centroid
                     length_km = edge_weights.get((i, j), edge_weights.get((j, i), 0))
                     total_cut_length += length_km
                     ax1.text(mid_point.x, mid_point.y, f'{length_km:.1f}',
                            ha='center', va='center', fontsize=7, fontweight='bold',
                            bbox=dict(boxstyle='round', facecolor='yellow',
-                                   edgecolor='red', linewidth=1.5, alpha=0.9))
+                                   edgecolor='red', linewidth=1.5, alpha=0.9),
+                           zorder=11)
 
             # Calculate perimeters
             part0_geoms = sample_tracts[sample_tracts['partition'] == 0].geometry
@@ -802,11 +803,16 @@ else:
 
             # Pre-cut perimeter (external boundary of all tracts)
             pre_cut_perimeter = combined_geom.boundary.length / 1000  # Convert to km
+            # If in degrees (unprojected), convert to km
+            if pre_cut_perimeter < 1:
+                pre_cut_perimeter = combined_geom.boundary.length * 111
 
             # Post-cut perimeters (external boundaries of each region)
             if len(part0_geoms) > 0:
                 region0_union = part0_geoms.unary_union
                 region0_perimeter = region0_union.boundary.length / 1000
+                if region0_perimeter < 1:
+                    region0_perimeter = region0_union.boundary.length * 111
                 c0 = region0_union.centroid
                 pop0 = sample_tracts[sample_tracts['partition'] == 0]['population'].sum() / 1000
                 ax1.text(c0.x, c0.y, f'Region 0\n{pop0:.1f}K pop\n{region0_perimeter:.1f} km perimeter',
@@ -816,6 +822,8 @@ else:
             if len(part1_geoms) > 0:
                 region1_union = part1_geoms.unary_union
                 region1_perimeter = region1_union.boundary.length / 1000
+                if region1_perimeter < 1:
+                    region1_perimeter = region1_union.boundary.length * 111
                 c1 = region1_union.centroid
                 pop1 = sample_tracts[sample_tracts['partition'] == 1]['population'].sum() / 1000
                 ax1.text(c1.x, c1.y, f'Region 1\n{pop1:.1f}K pop\n{region1_perimeter:.1f} km perimeter',
@@ -905,7 +913,7 @@ else:
                 ax2.text(x, y + 0.05, labels[i], ha='center', va='center',
                         fontsize=11, fontweight='bold', zorder=5)
                 ax2.text(x, y - 0.08, f'{pop_k:.1f}K', ha='center', va='center',
-                        fontsize=7, style='italic', color='black', zorder=5)
+                        fontsize=9, style='italic', color='black', zorder=5)
 
             ax2.set_xlim(-0.5, 4.5)
             ax2.set_ylim(-0.5, 4.5)
