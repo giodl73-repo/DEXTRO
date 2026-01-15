@@ -196,6 +196,106 @@ group_1_size = target_districts - split_point
 
 Total rounds: ⌈log₂(52)⌉ = 6 levels
 
+## Adjacency Graph Construction
+
+Before the recursive bisection algorithm can run, we must construct a **fully connected adjacency graph** from census tract geometries. This is a critical prerequisite - METIS requires the graph to form a single connected component.
+
+### Two-Step Process
+
+#### Step 1: Land-Based Adjacency (Queen Contiguity)
+
+We use **Queen contiguity** to identify tracts that share edges or vertices:
+```python
+from libpysal import weights
+
+queen_weights = weights.Queen.from_dataframe(
+    tracts_gdf,
+    use_index=False,
+    silence_warnings=True
+)
+```
+
+This creates adjacency links for tracts that physically touch on land.
+
+#### Step 2: County-Based Bridge Connections
+
+For states with islands or water barriers, Step 1 alone produces **disconnected components**. We use a county-based bridging algorithm to connect these components:
+
+**Algorithm**:
+1. Build NetworkX graph from land-based adjacency
+2. Add ALL nodes explicitly (including isolated nodes with no neighbors)
+3. Find all connected components using `nx.connected_components()`
+4. For each non-main component:
+   - Extract county code from each tract's GEOID (first 5 digits: SSCCC)
+   - Find all tracts in main component with same county
+   - If same-county tracts exist: Connect to closest same-county tract
+   - If no same-county match: Fall back to closest tract in any county
+5. Add new bridge edges to adjacency graph
+
+**Implementation**: `src/apportionment/data/adjacency_county_bridge.py`
+
+**Key Code**:
+```python
+def extract_county_from_geoid(geoid):
+    """Extract county FIPS from tract GEOID.
+
+    GEOID format: SSCCCTTTTTT (11 digits)
+    - SS: state FIPS (2 digits)
+    - CCC: county FIPS (3 digits)
+    - TTTTTT: tract code (6 digits)
+
+    Returns: SSCCC (5-character state+county code)
+    """
+    return str(geoid)[:5]
+
+def connect_components_by_county(blocks_gdf, queen_weights, target_crs):
+    """Connect disconnected components using closest neighbors within same county."""
+    # Build NetworkX graph - explicitly add all nodes
+    graph = nx.Graph()
+    for i in range(queen_weights.n):
+        graph.add_node(i)  # Critical: include isolated nodes
+    for i in range(queen_weights.n):
+        for j in queen_weights.neighbors[i]:
+            graph.add_edge(i, j)
+
+    # Find components and connect to main component
+    components = list(nx.connected_components(graph))
+    components.sort(key=len, reverse=True)
+    main_component = components[0]
+
+    new_edges = []
+    for component in components[1:]:
+        for tract_idx in component:
+            # Find closest tract in main component within same county
+            # (with fallback to any county if no same-county match)
+            closest_idx = find_closest_same_county(tract_idx, main_component, ...)
+            new_edges.append((tract_idx, closest_idx))
+
+    return new_edges
+```
+
+### Why County-Based Bridging?
+
+**Problem with distance-band approach**:
+- Arbitrary thresholds (1km, 5km, 50km) fail for distant islands
+- Creates too many unnecessary edges (Tennessee: 19,852 edges at 50km)
+- No geographic reasoning
+
+**Benefits of county-based approach**:
+- Minimal edge additions (only necessary bridges)
+- No arbitrary distance threshold needed
+- Geographically sensible (islands connect within their county)
+- Works for any distance (Alaska's Aleutian Islands ~1700km, Hawaii inter-island ~100km)
+
+### States Requiring Water Adjacency
+
+**30+ states** have disconnected components without water adjacency:
+- **Major island states**: Hawaii, Alaska, Washington, Michigan, New York, California, Florida, Maine
+- **Coastal states**: Massachusetts, Rhode Island, Maryland, Virginia, North Carolina, South Carolina, Georgia, Louisiana, Texas, Connecticut, New Jersey
+- **Great Lakes/River states**: Wisconsin, Ohio, Minnesota, Pennsylvania
+
+**Validation**: All 50 states for 2000, 2010, and 2020 Census must form single connected components before redistricting.
+
 ## Implementation
 
-The algorithm is implemented in `src/apportionment/partition/recursive_bisection.py`. See [ARCHITECTURE.md](ARCHITECTURE.md) for how this fits into the overall system architecture.
+The algorithm is implemented in `src/apportionment/partition/recursive_bisection.py`. Adjacency graph construction is in `src/apportionment/data/adjacency.py` and `src/apportionment/data/adjacency_county_bridge.py`. See [ARCHITECTURE.md](ARCHITECTURE.md) for how this fits into the overall system architecture.

@@ -24,15 +24,25 @@ Census tracts on islands have no land-based adjacency to the mainland. This crea
 - Maine's 3,000+ coastal islands
 - And 20+ more states...
 
-## The Solution: County-Aware Water Adjacency
+## The Solution: County-Based Bridge Connections
+
+**UPDATE (2026-01-14)**: We now use a graph-theoretic approach based on connected components, not just isolated nodes.
 
 ### Core Algorithm
 
-**For each island tract** (tract with zero land-based neighbors):
-1. Identify it as an island (no existing adjacencies OR only water)
-2. Find the nearest tract **with the same county GEOID prefix**
-3. Create a bidirectional adjacency link across water
-4. Result: Island is now connected within its proper county
+**For each disconnected component** (not just isolated tracts):
+1. Build NetworkX graph from land-based (Queen) adjacency
+2. **Explicitly add ALL nodes** (including isolated nodes with zero neighbors)
+3. Find all connected components using `nx.connected_components()`
+4. Identify main component (largest by tract count)
+5. For each smaller component:
+   - For each tract in the component:
+     - Extract county code from GEOID (first 5 digits: SSCCC)
+     - Find all tracts in main component with same county
+     - If same-county tracts exist: Connect to closest same-county tract
+     - If no same-county match: Fall back to closest tract in any county
+   - Create bidirectional adjacency links
+6. Result: All components connected into single graph
 
 ### Why County-Aware Matching is Critical
 
@@ -49,48 +59,103 @@ Census tracts on islands have no land-based adjacency to the mainland. This crea
 
 ## Implementation Details
 
-### Current 2020 Implementation
+### Current Implementation (2000, 2010, 2020)
 
-**File**: `scripts/create_adjacency_with_water.py`
+**Primary File**: `src/apportionment/data/adjacency.py`
+**Bridge Module**: `src/apportionment/data/adjacency_county_bridge.py`
 
 **Key Code Pattern**:
 ```python
-# 1. Identify island tracts
-island_tracts = []
-for i, tract in enumerate(tracts):
-    if len(adjacency[i]) == 0:  # No neighbors
-        island_tracts.append(i)
+from apportionment.data.adjacency_county_bridge import connect_components_by_county
 
-# 2. For each island, find nearest same-county tract
-for island_idx in island_tracts:
-    island_geoid = tracts.iloc[island_idx]['GEOID']
-    county_code = island_geoid[:5]  # First 5 digits = state + county
+# Step 1: Build land-based adjacency
+queen_weights = weights.Queen.from_dataframe(blocks_gdf, use_index=False)
 
-    # Find all tracts in same county that are NOT islands
-    same_county_tracts = []
-    for j, tract in enumerate(tracts):
-        if j != island_idx:
-            tract_geoid = tracts.iloc[j]['GEOID']
-            if tract_geoid.startswith(county_code):
-                if len(adjacency[j]) > 0:  # Not another island
-                    same_county_tracts.append(j)
+# Step 2: Add county-based bridge connections
+if include_water_adjacency:
+    new_edges = connect_components_by_county(blocks_gdf, queen_weights, target_crs)
 
-    # Find nearest
-    min_distance = float('inf')
-    nearest_idx = None
-    island_centroid = tracts.iloc[island_idx].geometry.centroid
+    if new_edges:
+        # Add new bridge edges to adjacency
+        neighbors_dict = {i: list(queen_weights.neighbors[i])
+                         for i in range(queen_weights.n)}
 
-    for j in same_county_tracts:
-        tract_centroid = tracts.iloc[j].geometry.centroid
-        distance = island_centroid.distance(tract_centroid)
-        if distance < min_distance:
-            min_distance = distance
-            nearest_idx = j
+        for idx1, idx2 in new_edges:
+            if idx2 not in neighbors_dict[idx1]:
+                neighbors_dict[idx1].append(idx2)
+            if idx1 not in neighbors_dict[idx2]:
+                neighbors_dict[idx2].append(idx1)
 
-    # Create bidirectional link
-    if nearest_idx is not None:
-        adjacency[island_idx].append(nearest_idx)
-        adjacency[nearest_idx].append(island_idx)
+        combined_weights = weights.W(neighbors_dict)
+```
+
+**Bridge Connection Module** (`adjacency_county_bridge.py`):
+```python
+import numpy as np
+import networkx as nx
+from scipy.spatial import cKDTree
+
+def extract_county_from_geoid(geoid):
+    """Extract county FIPS from tract GEOID (first 5 digits)."""
+    return str(geoid)[:5]
+
+def connect_components_by_county(blocks_gdf, queen_weights, target_crs):
+    """Connect disconnected components using closest neighbors within same county."""
+    # Build NetworkX graph from weights
+    graph = nx.Graph()
+    # CRITICAL: Add all nodes explicitly (including isolated nodes)
+    for i in range(queen_weights.n):
+        graph.add_node(i)
+    # Add edges
+    for i in range(queen_weights.n):
+        neighbors = queen_weights.neighbors[i]
+        for j in neighbors:
+            graph.add_edge(i, j)
+
+    # Find connected components
+    components = list(nx.connected_components(graph))
+    components.sort(key=len, reverse=True)
+
+    if len(components) == 1:
+        print("  Graph is already fully connected")
+        return []
+
+    # Extract county codes
+    counties = blocks_gdf['GEOID'].apply(extract_county_from_geoid).values
+
+    # Project for distance calculation
+    blocks_projected = blocks_gdf.to_crs(target_crs)
+    centroids = np.array([[geom.centroid.x, geom.centroid.y]
+                          for geom in blocks_projected.geometry])
+
+    # Build KD-tree for fast nearest neighbor search
+    tree = cKDTree(centroids)
+
+    # Connect each small component to main component
+    new_edges = []
+    main_component = components[0]
+
+    for component in components[1:]:
+        for tract_idx in list(component):
+            tract_county = counties[tract_idx]
+            tract_centroid = centroids[tract_idx]
+
+            # Find all tracts in main component with same county
+            same_county_main = [idx for idx in main_component
+                               if counties[idx] == tract_county]
+
+            if not same_county_main:
+                # Fall back to closest tract regardless of county
+                same_county_main = list(main_component)
+
+            # Find closest tract
+            candidates = np.array([centroids[idx] for idx in same_county_main])
+            distances = np.linalg.norm(candidates - tract_centroid, axis=1)
+            closest_idx = same_county_main[np.argmin(distances)]
+
+            new_edges.append((tract_idx, closest_idx))
+
+    return new_edges
 ```
 
 ### GEOID Structure (Critical for County Matching)
@@ -262,9 +327,37 @@ For each census year (2020, 2010, 2000):
 
 ## Key Takeaway
 
-**Water-based adjacency is NOT optional.** It is required for 30+ states and must be county-aware to produce valid redistricting results. When implementing historical census support, this feature MUST be included from the start.
+**Water-based adjacency is NOT optional.** It is required for 30+ states and must be county-aware to produce valid redistricting results. The county-based bridge connection approach ensures all 50 states form single connected components for METIS partitioning.
+
+### Critical Bug Fix (2026-01-14)
+
+**Bug**: Isolated nodes (tracts with zero neighbors) were not being added to the NetworkX graph during component analysis, so they were never identified as needing bridge connections.
+
+**Fix**: Explicitly add all nodes to the graph before finding components:
+```python
+# BEFORE (buggy):
+graph = nx.Graph()
+for i in range(queen_weights.n):
+    for j in queen_weights.neighbors[i]:
+        graph.add_edge(i, j)  # Isolated nodes never added
+
+# AFTER (correct):
+graph = nx.Graph()
+for i in range(queen_weights.n):
+    graph.add_node(i)  # Add ALL nodes explicitly
+for i in range(queen_weights.n):
+    for j in queen_weights.neighbors[i]:
+        graph.add_edge(i, j)
+```
+
+This fix enabled all 50 states to achieve full connectivity for all three census years.
 
 ---
 
-**Last Updated**: 2026-01-09
-**Implementation Status**: ✅ 2020 Complete, ⏳ 2010/2000 Pending
+**Last Updated**: 2026-01-14
+**Implementation Status**: ✅ 2020 Complete, ✅ 2010 Complete, ✅ 2000 Complete
+
+**Connectivity Verification**:
+- 2000 Census: 50/50 states fully connected ✓
+- 2010 Census: 50/50 states fully connected ✓
+- 2020 Census: 50/50 states fully connected ✓
