@@ -8,10 +8,19 @@ Generates:
 3. Analysis figures (comparison charts, scatter plots)
 """
 
+import argparse
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+# Parse arguments
+parser = argparse.ArgumentParser(description='Generate figures for Paper 3')
+parser.add_argument('--year', type=int, default=2020,
+                   help='Census year (default: 2020)')
+parser.add_argument('--version', type=str, default='v1',
+                   help='Pipeline version (default: v1)')
+args = parser.parse_args()
 
 # Create figures directory in outputs
 figures_dir = Path('../../outputs/papers/03_combined_recursive_bisection/figures')
@@ -20,6 +29,8 @@ figures_dir.mkdir(parents=True, exist_ok=True)
 print("=" * 70)
 print("Generating Figures for Paper 3: Combined Recursive Bisection")
 print("=" * 70)
+print(f"Census year: {args.year}")
+print(f"Pipeline version: {args.version}")
 print()
 
 # =============================================================================
@@ -29,29 +40,30 @@ print("[1/2] Copying round progression maps from pipeline outputs...")
 print("-" * 70)
 
 # Check if pipeline outputs exist
-pipeline_output_dir = Path('../../outputs/us_2020_v1')
+pipeline_output_dir = Path(f'../../outputs/us_{args.year}_{args.version}')
 if not pipeline_output_dir.exists():
     print(f"[WARNING] Pipeline outputs not found at: {pipeline_output_dir}")
     print("          Run the full pipeline first to generate round maps.")
+    print(f"          Example: python scripts/pipeline/run_complete_redistricting.py --year {args.year} --version {args.version}")
     print("          Skipping round progression figures...")
 else:
     # Minnesota round maps (3 rounds -> 8 districts)
     minnesota_rounds = [
-        ('../../outputs/us_2020_v1/states/minnesota/maps/rounds/round_01.png',
+        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_01.png',
          'minnesota_round_1_2_regions.png'),
-        ('../../outputs/us_2020_v1/states/minnesota/maps/rounds/round_02.png',
+        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_02.png',
          'minnesota_round_2_4_regions.png'),
-        ('../../outputs/us_2020_v1/states/minnesota/maps/rounds/round_03.png',
+        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_03.png',
          'minnesota_round_3_8_regions.png'),
     ]
 
     # Alabama round maps (3 rounds -> 7 districts)
     alabama_rounds = [
-        ('../../outputs/us_2020_v1/states/alabama/maps/rounds/round_01.png',
+        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_01.png',
          'alabama_round_1_2_regions.png'),
-        ('../../outputs/us_2020_v1/states/alabama/maps/rounds/round_02.png',
+        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_02.png',
          'alabama_round_2_4_regions.png'),
-        ('../../outputs/us_2020_v1/states/alabama/maps/rounds/round_03.png',
+        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_03.png',
          'alabama_round_3_7_regions.png'),
     ]
 

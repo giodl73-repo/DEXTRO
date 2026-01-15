@@ -7,15 +7,90 @@ Generates:
 2. figures/tract_to_graph.png - Visual showing tract-to-graph transformation
 """
 
+import argparse
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.patches import FancyBboxPatch, Circle, FancyArrowPatch
 import numpy as np
 from pathlib import Path
 
+# Parse arguments (for consistency, though not currently used)
+parser = argparse.ArgumentParser(description='Generate figures for presentation')
+parser.add_argument('--year', type=int, default=2020,
+                   help='Census year (default: 2020)')
+parser.add_argument('--version', type=str, default='v1',
+                   help='Pipeline version (default: v1)')
+args = parser.parse_args()
+
 # Create figures directory in outputs
 figures_dir = Path('../../outputs/presentations/edge_weighted_bisection/figures')
 figures_dir.mkdir(parents=True, exist_ok=True)
+
+print("=" * 70)
+print("Generating Figures for Edge-Weighted Bisection Presentation")
+print("=" * 70)
+print(f"Census year: {args.year}")
+print(f"Pipeline version: {args.version}")
+print()
+
+# =============================================================================
+# Part 1: Copy Round Progression Maps from Pipeline Outputs
+# =============================================================================
+print("[1/3] Copying round progression maps from pipeline outputs...")
+print("-" * 70)
+
+import shutil
+
+# Check if pipeline outputs exist
+pipeline_output_dir = Path(f'../../outputs/us_{args.year}_{args.version}')
+if not pipeline_output_dir.exists():
+    print(f"[WARNING] Pipeline outputs not found at: {pipeline_output_dir}")
+    print("          Round progression figures will not be available.")
+    print(f"          Run: python scripts/pipeline/run_complete_redistricting.py --year {args.year} --version {args.version}")
+    print()
+else:
+    # Minnesota round maps (3 rounds -> 8 districts)
+    minnesota_rounds = [
+        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_01.png',
+         'minnesota_round_1_2_regions.png'),
+        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_02.png',
+         'minnesota_round_2_4_regions.png'),
+        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_03.png',
+         'minnesota_round_3_8_regions.png'),
+    ]
+
+    # Alabama round maps (3 rounds -> 7 districts)
+    alabama_rounds = [
+        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_01.png',
+         'alabama_round_1_2_regions.png'),
+        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_02.png',
+         'alabama_round_2_4_regions.png'),
+        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_03.png',
+         'alabama_round_3_7_regions.png'),
+    ]
+
+    # Copy all round maps
+    copied_count = 0
+    for source, dest in minnesota_rounds + alabama_rounds:
+        source_path = Path(source)
+        dest_path = figures_dir / dest
+
+        if source_path.exists():
+            shutil.copy2(source_path, dest_path)
+            print(f"  ✓ Copied: {dest}")
+            copied_count += 1
+        else:
+            print(f"  ✗ Missing: {source}")
+
+    if copied_count > 0:
+        print(f"  Copied {copied_count} round progression maps")
+    print()
+
+# =============================================================================
+# Part 2: Generate Custom Visualization Figures
+# =============================================================================
+print("[2/3] Generating custom visualization figures...")
+print("-" * 70)
 
 # =============================================================================
 # Figure 1: Example Gerrymandered District
@@ -490,5 +565,9 @@ plt.savefig(figures_dir / 'before_after_cut.png', dpi=150, bbox_inches='tight',
 print(f"  Created: {figures_dir / 'before_after_cut.png'}")
 plt.close()
 
-print("\nAll figures created successfully!")
+print()
+print("=" * 70)
+print("Figure Generation Complete!")
+print("=" * 70)
 print(f"Location: {figures_dir.resolve()}")
+print()

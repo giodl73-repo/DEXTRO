@@ -5,9 +5,29 @@ cd /d %~dp0
 
 REM Parse command-line arguments
 set RESET_FLAG=0
+set YEAR=2020
+set VERSION=v1
+
 :parse_args
 if "%~1"=="" goto end_parse
-if /i "%~1"=="--reset" set RESET_FLAG=1
+if /i "%~1"=="--reset" (
+    set RESET_FLAG=1
+    shift
+    goto parse_args
+)
+if /i "%~1"=="--year" (
+    set YEAR=%~2
+    shift
+    shift
+    goto parse_args
+)
+if /i "%~1"=="--version" (
+    set VERSION=%~2
+    shift
+    shift
+    goto parse_args
+)
+REM Unknown argument, skip it
 shift
 goto parse_args
 :end_parse
@@ -32,6 +52,8 @@ echo Compiling Edge-Weighted Recursive Bisection Presentation Materials
 echo ======================================================================
 echo.
 echo Output directory: %OUTPUT_DIR%
+echo Year: %YEAR%
+echo Version: %VERSION%
 echo.
 
 REM ======================================================================
@@ -40,7 +62,7 @@ REM ======================================================================
 echo [1/3] Generating presentation figures...
 echo ----------------------------------------------------------------------
 
-python create_figures.py
+python create_figures.py --year %YEAR% --version %VERSION%
 if errorlevel 1 (
     echo [ERROR] Figure generation failed
     pause
