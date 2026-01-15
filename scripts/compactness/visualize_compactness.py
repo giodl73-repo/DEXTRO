@@ -124,8 +124,8 @@ def visualize_state_compactness(state_dir, state_code, census_year, dpi=150):
         print(f"ERROR: Unknown state code: {state_code}")
         return 1
 
-    # Load district_summary.csv for compactness data
-    summary_file = state_dir / 'district_summary.csv'
+    # Load district_summary.csv for compactness data (from data/ subdirectory)
+    summary_file = state_dir / 'data' / 'district_summary.csv'
     if not summary_file.exists():
         print(f"ERROR: {summary_file} not found")
         return 1
@@ -165,8 +165,8 @@ def visualize_state_compactness(state_dir, state_code, census_year, dpi=150):
 
     tracts = gpd.read_parquet(tracts_file)
 
-    # Load assignments
-    assignments_file = state_dir / 'final_assignments.pkl'
+    # Load assignments (from data/ subdirectory)
+    assignments_file = state_dir / 'data' / 'final_assignments.pkl'
     if not assignments_file.exists():
         print(f"ERROR: {assignments_file} not found")
         return 1
@@ -262,8 +262,8 @@ def visualize_national_compactness(output_dir, version, census_year, dpi=150, po
 
             tracts = gpd.read_parquet(tracts_file)
 
-            # Load assignments
-            assignments_file = state_dir / 'final_assignments.pkl'
+            # Load assignments (from data/ subdirectory)
+            assignments_file = state_dir / 'data' / 'final_assignments.pkl'
             if not assignments_file.exists():
                 continue
 
@@ -277,8 +277,8 @@ def visualize_national_compactness(output_dir, version, census_year, dpi=150, po
                 lambda row: f"{row['state_code']}-{row['district']:02d}", axis=1
             )
 
-            # Load compactness data if available
-            summary_file = state_dir / 'district_summary.csv'
+            # Load compactness data if available (from data/ subdirectory)
+            summary_file = state_dir / 'data' / 'district_summary.csv'
             if summary_file.exists():
                 try:
                     summary_df = pd.read_csv(summary_file)
