@@ -278,9 +278,9 @@ def main():
     if args.output_dir:
         output_dir = Path(args.output_dir)
     else:
-        output_dir = run_dir / 'political_analysis'
+        output_dir = run_dir  # Political subdirectory created later
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Don't create output_dir here - it's the state directory which already exists
 
     # Check if being called from parent pipeline
     position = int(os.environ.get('TQDM_POSITION', '-1'))
@@ -353,8 +353,12 @@ def main():
                 'biden_pct', 'trump_pct', 'dem_margin', 'lean_category'
             ])
 
-            district_file = output_dir / f'district_political_{args.year}.csv'
-            rounds_file = output_dir / f'rounds_political_{args.year}.csv'
+            # Create political subdirectory
+            political_dir = output_dir / 'political'
+            political_dir.mkdir(parents=True, exist_ok=True)
+
+            district_file = political_dir / 'district_political.csv'
+            rounds_file = political_dir / 'rounds_political.csv'
             empty_district_df.to_csv(district_file, index=False)
             empty_rounds_df.to_csv(rounds_file, index=False)
 
