@@ -77,10 +77,10 @@ else:
 
         if source_path.exists():
             shutil.copy2(source_path, dest_path)
-            print(f"  ✓ Copied: {dest}")
+            print(f"  [OK] Copied: {dest}")
             copied_count += 1
         else:
-            print(f"  ✗ Missing: {source}")
+            print(f"  [MISSING] {source}")
 
     if copied_count > 0:
         print(f"  Copied {copied_count} round progression maps")
@@ -617,7 +617,7 @@ else:
             def get_neighbors(tract_idx, gdf):
                 """Get indices of adjacent tracts."""
                 neighbors = []
-                tract_geom = gdf.iloc[tract_idx].geometry
+                tract_geom = gdf.loc[tract_idx, 'geometry']
                 for idx in gdf.index:
                     if idx != tract_idx:
                         if tract_geom.touches(gdf.loc[idx, 'geometry']):
@@ -675,34 +675,36 @@ else:
                             edge_weights[(i, j)] = length_km
                             edge_weights[(j, i)] = length_km
 
-            # Run METIS to partition into 2 groups
+            # Run METIS to partition into 2 groups using the codebase wrapper
             try:
-                import pymetis
+                # Add parent directory to path to import from src
+                import sys
+                sys.path.insert(0, str(Path('../../src').resolve()))
+                from apportionment.partition.metis_wrapper import partition_graph
 
                 # Prepare data for METIS
                 adjacency_list = [adjacency.get(i, []) for i in range(n_tracts)]
-                vweights = [int(sample_tracts.iloc[i]['population']) for i in range(n_tracts)]
+                vweights = np.array([int(sample_tracts.iloc[i]['population']) for i in range(n_tracts)])
 
-                # Prepare edge weights for METIS (need integer weights)
-                eweights_list = []
-                for i in range(n_tracts):
-                    for j in adjacency_list[i]:
-                        if i < j:  # Only include each edge once
-                            weight = int(edge_weights[(i, j)] * 100)  # Scale to integers
-                            eweights_list.append(weight)
+                # Prepare edge weights dictionary for METIS
+                edge_weights_dict = {}
+                for (i, j), weight in edge_weights.items():
+                    if i < j:  # Only include each edge once
+                        edge_weights_dict[(i, j)] = weight
 
                 # Run METIS
-                n_cuts, membership = pymetis.part_graph(
-                    nparts=2,
+                membership = partition_graph(
                     adjacency=adjacency_list,
-                    vweights=vweights,
-                    eweights=eweights_list
+                    vertex_weights=vweights,
+                    nparts=2,
+                    edge_weights=edge_weights_dict,
+                    debug=False
                 )
 
-                print(f"  METIS cut: {n_cuts} edges")
+                print(f"  Used METIS partitioning")
 
-            except ImportError:
-                print("  [WARNING] pymetis not available, using simple cut")
+            except Exception as e:
+                print(f"  [WARNING] METIS not available ({e}), using simple cut")
                 # Fallback: split by position
                 centroids = [sample_tracts.iloc[i].geometry.centroid for i in range(n_tracts)]
                 xs = [c.x for c in centroids]
