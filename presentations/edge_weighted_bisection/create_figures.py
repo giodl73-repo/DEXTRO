@@ -911,10 +911,19 @@ else:
 
                         # Only label if length is significant (> 0.1 km)
                         if length_km > 0.1:
+                            # Style labels: yellow for cut edges, white for non-cut
+                            if is_cut:
+                                label_style = dict(boxstyle='round', facecolor='yellow',
+                                                 edgecolor='red', linewidth=1.5, alpha=0.9)
+                                fontweight = 'bold'
+                            else:
+                                label_style = dict(boxstyle='round', facecolor='white',
+                                                 edgecolor='gray', linewidth=0.5, alpha=0.8)
+                                fontweight = 'normal'
+
                             ax2.text(label_x, label_y, f'{length_km:.1f}',
                                    ha='center', va='center', fontsize=9,
-                                   bbox=dict(boxstyle='round', facecolor='white',
-                                           edgecolor='gray', linewidth=0.5, alpha=0.8))
+                                   fontweight=fontweight, bbox=label_style)
 
             # Draw nodes colored by partition
             for i in range(n_tracts):
