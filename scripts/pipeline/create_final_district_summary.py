@@ -185,68 +185,151 @@ def create_district_summary(
 
 
 def create_rounds_hierarchy(run_dir: Path, num_districts: int, debug: bool = False):
-    """Create rounds_hierarchy.csv from intermediate round metadata."""
+    """
+    Create rounds_hierarchy.csv from intermediate round metadata.
 
+    For single-district states: Creates 6 rounds with the same district.
+    For multi-district states: Extends to 6 rounds by repeating final round.
+    """
     intermediate_dir = run_dir / 'intermediate'
-
-    if not intermediate_dir.exists():
-        if debug:
-            print(f"  No intermediate directory found, skipping hierarchy creation")
-        return None
-
-    # Find all round metadata files
-    round_files = sorted(intermediate_dir.glob('round_*_metadata.json'))
-
-    if not round_files:
-        if debug:
-            print(f"  No round files found, skipping hierarchy creation")
-        return None
-
     hierarchy_data = []
 
-    for metadata_file in round_files:
-        with open(metadata_file, 'r') as f:
-            metadata = json.load(f)
+    # Handle single-district states (no intermediate directory)
+    if not intermediate_dir.exists() or num_districts == 1:
+        if debug:
+            print(f"  Single-district state, creating 6-round hierarchy")
 
-        round_num = metadata['depth']
-        num_regions = metadata['num_regions']
-        total_pop = metadata.get('total_population', 0)
-        ideal_pop = total_pop / num_districts if num_districts > 0 else 0
+        # Load tract data to get population and count
+        assignments_file = run_dir / 'data' / 'final_assignments.pkl'
+        if not assignments_file.exists():
+            if debug:
+                print(f"  No assignments file found, skipping hierarchy creation")
+            return None
 
-        # Extract region information
-        regions = metadata.get('regions', [])
+        with open(assignments_file, 'rb') as f:
+            assignments = pickle.load(f)
 
-        for region in regions:
-            region_id = region.get('region_id', 0)
-            region_name = region.get('name', '')
-            population = region.get('population', 0)
-            num_blocks = region.get('num_blocks', 0)
-            target_districts = region.get('target_districts', 0)
+        # Get state code from directory name
+        state_name = run_dir.name
+        state_code = None
+        STATE_NAME_TO_CODE = {
+            'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR', 'california': 'CA',
+            'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE', 'florida': 'FL', 'georgia': 'GA',
+            'hawaii': 'HI', 'idaho': 'ID', 'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA',
+            'kansas': 'KS', 'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+            'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS', 'missouri': 'MO',
+            'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV', 'new_hampshire': 'NH', 'new_jersey': 'NJ',
+            'new_mexico': 'NM', 'new_york': 'NY', 'north_carolina': 'NC', 'north_dakota': 'ND', 'ohio': 'OH',
+            'oklahoma': 'OK', 'oregon': 'OR', 'pennsylvania': 'PA', 'rhode_island': 'RI', 'south_carolina': 'SC',
+            'south_dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT', 'vermont': 'VT',
+            'virginia': 'VA', 'washington': 'WA', 'west_virginia': 'WV', 'wisconsin': 'WI', 'wyoming': 'WY'
+        }
+        state_code = STATE_NAME_TO_CODE.get(state_name, 'XX')
 
-            # Calculate deviation
-            if target_districts > 0:
-                per_district_pop = population / target_districts
-                deviation_pct = ((per_district_pop - ideal_pop) / ideal_pop * 100) if ideal_pop > 0 else 0
-            else:
-                per_district_pop = population
-                deviation_pct = 0
+        # Find the census year from the parent directory path
+        output_dir = run_dir.parent.parent
+        year_match = output_dir.name
+        census_year = '2020'  # default
+        if '_2010_' in year_match:
+            census_year = '2010'
+        elif '_2000_' in year_match:
+            census_year = '2000'
 
+        # Load tract data
+        tracts_file = Path(f'data/tracts/{census_year}/{state_code.lower()}_tracts_{census_year}.parquet')
+        if not tracts_file.exists():
+            if debug:
+                print(f"  Tracts file not found: {tracts_file}")
+            return None
+
+        tracts = pd.read_parquet(tracts_file)
+        total_pop = int(tracts['population'].sum())
+        num_tracts = len(tracts)
+
+        # Create 6 rounds with the same single district
+        for round_num in range(1, 7):
             hierarchy_data.append({
                 'round': round_num,
-                'total_regions': num_regions,
-                'region_id': region_id,
-                'region_name': region_name,
-                'population': population,
-                'num_tracts': num_blocks,
-                'target_districts': target_districts,
-                'population_per_district': int(per_district_pop),
-                'deviation_from_ideal_pct': round(deviation_pct, 3)
+                'total_regions': 1,
+                'region_id': 0,
+                'region_name': f'{state_code}0',
+                'population': total_pop,
+                'num_tracts': num_tracts,
+                'target_districts': 1,
+                'population_per_district': total_pop,
+                'deviation_from_ideal_pct': 0.0
             })
+    else:
+        # Multi-district state: load from intermediate files
+        round_files = sorted(intermediate_dir.glob('round_*_metadata.json'))
+
+        if not round_files:
+            if debug:
+                print(f"  No round files found, skipping hierarchy creation")
+            return None
+
+        for metadata_file in round_files:
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+
+            round_num = metadata['depth']
+            num_regions = metadata['num_regions']
+            total_pop = metadata.get('total_population', 0)
+            ideal_pop = total_pop / num_districts if num_districts > 0 else 0
+
+            # Extract region information
+            regions = metadata.get('regions', [])
+
+            for region in regions:
+                region_id = region.get('region_id', 0)
+                region_name = region.get('name', '')
+                population = region.get('population', 0)
+                num_blocks = region.get('num_blocks', 0)
+                target_districts = region.get('target_districts', 0)
+
+                # Calculate deviation
+                if target_districts > 0:
+                    per_district_pop = population / target_districts
+                    deviation_pct = ((per_district_pop - ideal_pop) / ideal_pop * 100) if ideal_pop > 0 else 0
+                else:
+                    per_district_pop = population
+                    deviation_pct = 0
+
+                hierarchy_data.append({
+                    'round': round_num,
+                    'total_regions': num_regions,
+                    'region_id': region_id,
+                    'region_name': region_name,
+                    'population': population,
+                    'num_tracts': num_blocks,
+                    'target_districts': target_districts,
+                    'population_per_district': int(per_district_pop),
+                    'deviation_from_ideal_pct': round(deviation_pct, 3)
+                })
 
     if not hierarchy_data:
         return None
 
     df = pd.DataFrame(hierarchy_data)
+
+    # Extend to 6 rounds if needed (for multi-district states that end early)
+    max_round = df['round'].max()
+    if max_round < 6:
+        if debug:
+            print(f"  Extending from round {max_round} to round 6")
+
+        # Get the last round's data
+        last_round_data = df[df['round'] == max_round].copy()
+
+        # Replicate for rounds max_round+1 to 6
+        for round_num in range(max_round + 1, 7):
+            extended_round = last_round_data.copy()
+            extended_round['round'] = round_num
+            df = pd.concat([df, extended_round], ignore_index=True)
+
+    # Sort by round and region_id for consistency
+    df = df.sort_values(['round', 'region_id']).reset_index(drop=True)
+
     data_dir = run_dir / 'data'
     data_dir.mkdir(parents=True, exist_ok=True)
     output_file = data_dir / 'rounds_hierarchy.csv'
@@ -387,6 +470,12 @@ if __name__ == '__main__':
             stage_pbar.close()
             del stage_pbar
 
+        # Create rounds hierarchy even when skipping main processing
+        # (it has its own existence check and might need to be generated)
+        if args.debug:
+            print("\nCreating rounds hierarchy (skip path)...")
+        create_rounds_hierarchy(run_dir, num_districts, debug=args.debug)
+
         if args.debug: print(f"[DEBUG] Exiting (skip path)", file=sys.stderr, flush=True)
         sys.stdout.flush()
         sys.stderr.flush()
@@ -417,11 +506,10 @@ if __name__ == '__main__':
         progress_bar=stage_pbar
     )
 
-    # Create rounds hierarchy (skip for single-district states)
-    if num_districts > 1:
-        if args.debug:
-            print("\nCreating rounds hierarchy...")
-        create_rounds_hierarchy(run_dir, num_districts, debug=args.debug)
+    # Create rounds hierarchy (all states, including single-district)
+    if args.debug:
+        print("\nCreating rounds hierarchy...")
+    create_rounds_hierarchy(run_dir, num_districts, debug=args.debug)
 
     # Close progress bar if it was created
     if stage_pbar:
