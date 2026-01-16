@@ -39,7 +39,7 @@ Master index of all congressional redistricting pipeline enhancements.
 |---|-------|--------|-------|
 | [8](active/08_block_level_data.md) | Block-Level Data Support | Phase 0 Complete (2010), Partial (2000) | [View](active/08_block_level_data.md) |
 
-### 📋 Planned (4 enhancements)
+### 📋 Planned (11 enhancements)
 
 | # | Title | Priority | Files |
 |---|-------|----------|-------|
@@ -47,6 +47,13 @@ Master index of all congressional redistricting pipeline enhancements.
 | [11](active/11_baseline_comparison.md) | Baseline Comparison to Enacted Districts | Low | [View](active/11_baseline_comparison.md) |
 | [12](active/12_edge_weighted_analysis.md) | Edge-Weighted Algorithm Analysis | Medium | [View](active/12_edge_weighted_analysis.md) |
 | [16](active/16_metro_2000.md) | 2000 Census Metro Area Maps | Low | [View](active/16_metro_2000.md) |
+| [22](active/22_national_redistricting.md) | National Redistricting (No State Boundaries) | Low (Research/Experimental) | [View](active/22_national_redistricting.md) |
+| [23](active/23_county_representation.md) | Direct County Representation | Low (Research/Experimental) | [View](active/23_county_representation.md) |
+| [24](active/24_party_based_allocation.md) | Party-Based District Allocation | Low (Research/Experimental) | [View](active/24_party_based_allocation.md) |
+| [25](active/25_committee_based_representation.md) | Committee-Based Representation | Low (Research/Experimental) | [View](active/25_committee_based_representation.md) |
+| [26](active/26_demographic_similarity_districts.md) | Demographic Similarity Districts | Low (Research/Experimental) | [View](active/26_demographic_similarity_districts.md) |
+| [27](active/27_electoral_college_county_reform.md) | Electoral College County-Based Reform | Low (Research/Experimental) | [View](active/27_electoral_college_county_reform.md) |
+| [28](active/28_multi_member_districts.md) | Multi-Member Districts | Low (Research/Experimental) | [View](active/28_multi_member_districts.md) |
 
 ## Related Documentation
 
