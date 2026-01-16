@@ -101,7 +101,7 @@ def generate_real_tracts_examples(args):
     variants = [
         ('minneapolis_50_50', 'map', 'none', 'before', 'edgeweighted'),         # Figure 1: just geography
         ('minneapolis_50_50', 'both', 'none', 'before', 'edgeweighted'),        # Figure 2: show graph representation before partition
-        ('minneapolis_50_50', 'both', 'cut', 'after', 'unweighted'),            # Figure 3: show unweighted cut (50-50)
+        ('minneapolis_50_50', 'both', 'none', 'after', 'unweighted'),            # Figure 3: show unweighted no labels (50-50)
         ('minneapolis_50_50', 'both', 'all', 'before', 'edgeweighted'),         # Figure 4: show edge weights data before partition
         ('minneapolis_50_50', 'both', 'all', 'after', 'edgeweighted'),          # Figure 5: show edgeweighted cut with all labels (50-50)
         ('minneapolis_67_33', 'both', 'all', 'after', 'edgeweighted'),          # Figure 6: show 2:1 split with edge weights
@@ -109,7 +109,8 @@ def generate_real_tracts_examples(args):
 
     for city, panels, boundary_labels, partition, partition_mode in variants:
         # Let the script auto-generate the filename with all parameters
-        cmd = f'{sys.executable} {variant_script} --city {city} --year {args.year} --panels {panels} --boundary-labels {boundary_labels} --partition {partition} --partition-mode {partition_mode}'
+        # Note: Use 2010 for tract data (that's what we have downloaded)
+        cmd = f'{sys.executable} {variant_script} --city {city} --year 2010 --panels {panels} --boundary-labels {boundary_labels} --partition {partition} --partition-mode {partition_mode}'
         # Filename includes ratio extracted from config automatically
         if run_command(cmd, f"Creating figure for {city}"):
             print(f"    Generated figure for {city}")

@@ -333,7 +333,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
         title = f"{config['title']} - {config['subtitle']}"
     else:
         title = f"{config['title']} - Original"
-    fig.suptitle(title, fontsize=14, fontweight='bold', y=0.98)
+    fig.suptitle(title, fontsize=15, fontweight='bold', y=0.98)
 
     # MAP PANEL
     if show_map:
@@ -358,7 +358,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
             centroid = sample_tracts.iloc[idx].geometry.centroid
             pop_k = sample_tracts.iloc[idx]['population'] / 1000
             ax_map.text(centroid.x, centroid.y, f'{labels[idx]}\n{pop_k:.1f}K',
-                    ha='center', va='center', fontsize=9, fontweight='bold',
+                    ha='center', va='center', fontsize=10, fontweight='bold',
                     bbox=dict(boxstyle='round', facecolor='white',
                             edgecolor='black', linewidth=1))
 
@@ -383,7 +383,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
                                 mid_point = boundary.centroid
                                 if length_km > 0.1:
                                     ax_map.text(mid_point.x, mid_point.y, f'{length_km:.1f}',
-                                           ha='center', va='center', fontsize=7, fontweight='bold',
+                                           ha='center', va='center', fontsize=8, fontweight='bold',
                                            bbox=dict(boxstyle='round', facecolor='yellow',
                                                    edgecolor='red', linewidth=1.5, alpha=0.9),
                                            zorder=11)
@@ -396,7 +396,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
                                 mid_point = boundary.centroid
                                 if length_km > 0.1:
                                     ax_map.text(mid_point.x, mid_point.y, f'{length_km:.1f}',
-                                           ha='center', va='center', fontsize=7,
+                                           ha='center', va='center', fontsize=8,
                                            bbox=dict(boxstyle='round', facecolor='white',
                                                    edgecolor='black', linewidth=0.5, alpha=0.8))
 
@@ -439,31 +439,31 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
                 if h_separation > v_separation:
                     label_y = combined_bounds[3] + map_height * 0.10
                     ax_map.text(centroid0.x, label_y, f'Region 1\n{pop0:.1f}K\n{pct0:.1f}%\nPP: {pp0:.3f}',
-                            ha='center', va='bottom', fontsize=11, fontweight='bold',
+                            ha='center', va='bottom', fontsize=12, fontweight='bold',
                             bbox=dict(boxstyle='round', facecolor='lightblue',
                                     edgecolor='blue', linewidth=1.5, alpha=0.9))
                     ax_map.text(centroid1.x, label_y, f'Region 2\n{pop1:.1f}K\n{pct1:.1f}%\nPP: {pp1:.3f}',
-                            ha='center', va='bottom', fontsize=11, fontweight='bold',
+                            ha='center', va='bottom', fontsize=12, fontweight='bold',
                             bbox=dict(boxstyle='round', facecolor='lightcoral',
                                     edgecolor='red', linewidth=1.5, alpha=0.9))
                 else:
                     label_x0 = combined_bounds[2] + map_width * 0.10
                     label_x1 = combined_bounds[0] - map_width * 0.10
                     ax_map.text(label_x0, centroid0.y, f'Region 1\n{pop0:.1f}K\n{pct0:.1f}%\nPP: {pp0:.3f}',
-                            ha='center', va='center', fontsize=11, fontweight='bold',
+                            ha='center', va='center', fontsize=12, fontweight='bold',
                             bbox=dict(boxstyle='round', facecolor='lightblue',
                                     edgecolor='blue', linewidth=1.5, alpha=0.9))
                     ax_map.text(label_x1, centroid1.y, f'Region 2\n{pop1:.1f}K\n{pct1:.1f}%\nPP: {pp1:.3f}',
-                            ha='center', va='center', fontsize=11, fontweight='bold',
+                            ha='center', va='center', fontsize=12, fontweight='bold',
                             bbox=dict(boxstyle='round', facecolor='lightcoral',
                                     edgecolor='red', linewidth=1.5, alpha=0.9))
 
         ax_map.axis('off')
         if panels == 'map':
-            ax_map.set_title('Real Census Tracts', fontsize=11, fontweight='bold')
+            ax_map.set_title('Real Census Tracts', fontsize=12, fontweight='bold')
 
-        # Add cut label to map panel (if showing partition and labels enabled)
-        if show_partition and boundary_labels != 'none':
+        # Add metrics label to map panel (if showing partition)
+        if show_partition:
             # Calculate population-weighted average compactness
             pop0_raw = sample_tracts[membership == 0]['population'].sum()
             pop1_raw = sample_tracts[membership == 1]['population'].sum()
@@ -477,8 +477,15 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
             ylim = ax_map.get_ylim()
             label_x = (xlim[0] + xlim[1]) / 2
             label_y = ylim[0] - (ylim[1] - ylim[0]) * 0.08
-            ax_map.text(label_x, label_y, f'Total Cut: {total_cut_length:.1f} km\nAve PP: {avg_pp:.3f}\nStd Dev PP: {std_dev_pp:.3f}',
-                       ha='center', va='top', fontsize=10, fontweight='bold',
+
+            # Include total cut only if boundary labels are shown
+            if boundary_labels != 'none':
+                label_text = f'Total Cut: {total_cut_length:.1f} km\nAve PP: {avg_pp:.3f}\nStd Dev PP: {std_dev_pp:.3f}'
+            else:
+                label_text = f'Ave PP: {avg_pp:.3f}\nStd Dev PP: {std_dev_pp:.3f}'
+
+            ax_map.text(label_x, label_y, label_text,
+                       ha='center', va='top', fontsize=11, fontweight='bold',
                        bbox=dict(boxstyle='round', facecolor='yellow',
                                 edgecolor='red', linewidth=1.5, alpha=0.9))
 
@@ -553,7 +560,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
                                 fontweight = 'normal'
 
                             ax_graph.text(label_x, label_y, f'{length_km:.1f}',
-                                   ha='center', va='center', fontsize=9,
+                                   ha='center', va='center', fontsize=10,
                                    fontweight=fontweight, bbox=label_style)
 
         # Draw nodes
@@ -570,12 +577,13 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
             ax_graph.add_patch(circle)
 
             ax_graph.text(x, y + 0.06, labels[i], ha='center', va='center',
-                    fontsize=9, fontweight='bold', zorder=5)
+                    fontsize=10, fontweight='bold', zorder=5)
             ax_graph.text(x, y - 0.09, f'{pop_k:.1f}K', ha='center', va='center',
-                    fontsize=9, fontweight='bold', color='black', zorder=5)
+                    fontsize=10, fontweight='bold', color='black', zorder=5)
 
-        # Region labels (only if showing partition)
-        if show_partition:
+        # Region labels (only if showing partition and graph only)
+        # Skip when both map and graph are shown (map already has region labels)
+        if show_partition and panels == 'graph':
             pop0_total = sample_tracts[membership == 0]['population'].sum() / 1000
             pop1_total = sample_tracts[membership == 1]['population'].sum() / 1000
 
@@ -588,7 +596,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
                 label_x0 = sum(xs0) / len(xs0)
                 label_y0 = max(ys0) + 0.5
                 ax_graph.text(label_x0, label_y0, f'Region 1\n{pop0_total:.1f}K',
-                        ha='center', va='bottom', fontsize=11, fontweight='bold',
+                        ha='center', va='bottom', fontsize=12, fontweight='bold',
                         bbox=dict(boxstyle='round', facecolor='lightblue',
                                 edgecolor='blue', linewidth=1.5, alpha=0.9))
 
@@ -598,7 +606,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
                 label_x1 = sum(xs1) / len(xs1)
                 label_y1 = max(ys1) + 0.5
                 ax_graph.text(label_x1, label_y1, f'Region 2\n{pop1_total:.1f}K',
-                        ha='center', va='bottom', fontsize=11, fontweight='bold',
+                        ha='center', va='bottom', fontsize=12, fontweight='bold',
                         bbox=dict(boxstyle='round', facecolor='lightcoral',
                                 edgecolor='red', linewidth=1.5, alpha=0.9))
 
@@ -610,7 +618,7 @@ def create_figure_variant(sample_tracts, adjacency, edge_weights, membership, co
         # Add cut label to graph panel (if showing partition and labels enabled)
         if show_partition and boundary_labels != 'none':
             ax_graph.text(2.15, -0.5, f'Total Cut: {total_cut_length:.1f} km',
-                         ha='center', va='top', fontsize=10, fontweight='bold',
+                         ha='center', va='top', fontsize=11, fontweight='bold',
                          bbox=dict(boxstyle='round', facecolor='yellow',
                                   edgecolor='red', linewidth=1.5, alpha=0.9))
 

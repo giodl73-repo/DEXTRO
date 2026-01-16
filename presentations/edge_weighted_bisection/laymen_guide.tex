@@ -80,7 +80,7 @@ Redistricting becomes a graph partitioning problem: split into $k$ connected gro
 
 \textbf{METIS} is a graph partitioning library from the University of Minnesota, widely used in engineering and scientific computing. Given a graph, target populations, and connectivity requirements, METIS quickly returns two balanced, connected groups. It uses sophisticated multilevel algorithms that are both fast (handling graphs with millions of nodes) and effective (finding high-quality partitions). METIS has been refined over decades and tested in countless applications, making it a battle-tested tool for our redistricting needs.
 
-For our example in Minnesota, we run METIS on the graph and ask it to split the graph into 2 components. METIS reads a specially-formatted text file describing the graph structure, then outputs the partition assignment. Here's the unweighted version (format 001) with input on the left and output on the right:
+For our example in Minnesota, we run METIS on the graph and ask it to split the graph into 2 components. METIS reads a specially-formatted text file describing the graph structure, then outputs the partition assignment.
 
 \textbf{Format explanation:}
 \begin{itemize}[noitemsep,topsep=0pt]
@@ -140,9 +140,11 @@ Here's what that looks like geographically:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_cut_after_unweighted.png}
+\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_after_unweighted.png}
 \caption{\textbf{Graph Partitioning}: METIS creates two separate graphs of equal population.}
 \end{figure}
+
+If you compare closely, you can see that the boundaries that are cut in the map are equal to the edges that are cut in the graph. 
 
 \subsubsection{Compactness}
 We measure compactness using the \textbf{Polsby-Popper score}: $\frac{4\pi \times \text{Area}}{\text{Perimeter}^2}$. A perfect circle scores 1.0, a square scores ~0.79, and gerrymandered districts score $<$0.2. Our goal is to generate districts with scores of 0.25 to 0.30 and higher. Why does this formula work? It rewards shapes with large areas relative to their perimeters. Circles and squares are compact; snakes and salamanders are not. The formula provides an objective, numerical measure of the "bizarre shape" problem we're trying to avoid.
@@ -151,14 +153,12 @@ In this example, region 1 is quite compact at 0.522 but region 2 is 0.246. The a
 
 \subsection{Partitioning with Edge Weights}
 
-\textbf{Edge-weighted partitioning} assigns each edge a weight equal to its actual boundary length. Only after meeting population targets does it minimize boundary length. This simple addition transforms the algorithm from counting edges to measuring real geography. We compute edge weights by loading census tract geometries, projecting to meters, finding where boundaries intersect, and measuring the shared length. Water crossings use artificial "bridge" edges with reasonable weights matching typical mainland boundaries within the same county, ensuring islands remain connected without distorting the optimization.
-
-The key insight: not all tract boundaries are equally expensive to cut. A long boundary between two tracts is more "costly" than a short boundary. By making METIS aware of these costs, we guide it toward geographic compactness.
+\textbf{Edge-weighted partitioning} assigns each edge a weight equal to its actual boundary length. Only after meeting population targets does it minimize boundary length. This simple addition transforms the algorithm from counting edges to measuring real geography. We compute edge weights by loading census tract geometries, projecting to meters, finding where boundaries intersect, and measuring the shared length.\footnote{Water crossings use artificial "bridge" edges with reasonable weights matching typical mainland boundaries within the same county.} A long boundary between two tracts is more "costly" than a short boundary. By making METIS aware of these costs, we guide it toward geographic compactness.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_before_edgeweighted.png}
-\caption{\textbf{Edge Weights}: The boundary labels (km) show the lengths between adjacent tracts and become edge weights in the graph.}
+\caption{\textbf{Edge Weights}: The boundary lengths (km) become edge weights in the graph.}
 \end{figure}
 
 Now we pass this geographic data to METIS using the edge-weighted format (011), again showing input and output side-by-side:
@@ -249,58 +249,40 @@ This 2-line file specifies partition 0 gets 67\% and partition 1 gets 33\% (a 2:
 \caption{\textbf{Unequal Splits}: The same twelve Minneapolis tracts split 2:1 (67-33) instead of 50-50.}
 \end{figure}
 
+The algorithm successfully creates a 67-33 population split while minimizing boundary length. As a result, region 1 has a PP of 0.398 and region 2 has a PP of 0.502, with an average of 0.431, a standard deviaton of 0.048, and an even shorter cut than the equal split.
+
 \subsection{Recursive Bisection: Splitting Repeatedly}
 
 Now that we understand graph partitioning, how do we use it? \textbf{Recursive bisection} repeatedly splits regions in half. Start with the whole state, bisect into two equal-population parts, then recursively split each part until reaching the target district count. This approach is elegant because it breaks a complex problem (creating 8 or 38 or 52 districts) into many simple problems (repeatedly creating 2 districts).
 
 Why is recursion natural here? Think about how you might manually draw districts. You'd probably start by splitting the state into large regions, then subdivide those regions, continuing until you reach individual districts. Recursive bisection formalizes this intuitive approach, applying the same two-way split operation at each step until the job is complete. The algorithm is simple enough to implement in 50 lines of code, yet powerful enough to handle any state.
 
-\vspace{1em}
+\vspace{0.5em}
 \noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{
-\textbf{Recursive Bisection Algorithm}
+{\small
+\textbf{Recursive Bisection Algorithm (RBA)}
 
-\vspace{0.5em}
-\textbf{Input:} Region with population $P$, need $n$ districts
+\textbf{RBA}$(R, P, n)$:
 
-\textbf{Output:} $n$ districts with equal population
+\textbf{Input:} $R$: region, $P$: population, $n$: number of districts
 
-\vspace{0.5em}
+\textbf{Output:} $\{(R_1, P_1, 1), \ldots, (R_n, P_n, n)\}$ where $P_1, \ldots, P_n \approx P/n$
+
+\vspace{0.3em}
 \textbf{Algorithm:}
-\begin{enumerate}
-\item \textbf{Base case:} If $n = 1$, the region is already a district. Done!
-
+\begin{enumerate}[noitemsep,topsep=0pt]
+\item \textbf{Base case:} If $n = 1$, return $\{(R, P, 1)\}$
 \item \textbf{Recursive case:} Calculate how to split $n$ into two parts:
-\begin{itemize}
-\item If $n$ is \textbf{even}: Split into $n/2$ and $n/2$ (equal split)
-\item If $n$ is \textbf{odd}: Split into $\lceil n/2 \rceil$ and $\lfloor n/2 \rfloor$ (adjacent integers)
+\begin{itemize}[noitemsep,topsep=0pt]
+\item If $n$ is \textbf{even}: $x = n/2, \, y = n/2$ (equal split)
+\item If $n$ is \textbf{odd}: $x = \lceil n/2 \rceil, \, y = \lfloor n/2 \rfloor$ (adjacent integers)
 \end{itemize}
-
-\item \textbf{Partition:} Use METIS to split the region into two parts with population ratio matching the district ratio
-
-\item \textbf{Recurse:} Apply the algorithm to each part independently
+\item \textbf{Partition:} Split $R$ into regions $R_1$ and $R_2$ with populations $P_1$ and $P_2$ where $P_1 : P_2 \approx x : y$
+\item \textbf{Recurse:} Return $\text{RBA}(R_1, P_1, x) \cup \text{RBA}(R_2, P_2, y)$
 \end{enumerate}
+}
 }}
 
-\vspace{1em}
-\textbf{Examples:}
-
-\textbf{Minnesota (8 districts):} $8 = 2^3$ (power of 2)
-\begin{itemize}
-\item Round 1: Split 8 → \textbf{4 + 4} (even split)
-\item Round 2: Split each 4 → \textbf{2 + 2} and \textbf{2 + 2} (even splits)
-\item Round 3: Split each 2 → \textbf{1 + 1} four times (even splits)
-\item Result: 8 equally-sized districts
-\end{itemize}
-
-\textbf{Alabama (7 districts):} 7 is odd
-\begin{itemize}
-\item Round 1: Split 7 → \textbf{4 + 3} (adjacent integers: $\lceil 7/2 \rceil = 4$, $\lfloor 7/2 \rfloor = 3$)
-\item Round 2: Split 4 → \textbf{2 + 2}, split 3 → \textbf{2 + 1} (one even, one odd)
-\item Round 3: Split each 2 → \textbf{1 + 1} three times, the 1 is done
-\item Result: 7 districts with sizes automatically balanced
-\end{itemize}
-
-\textbf{Key insight:} The algorithm automatically determines the optimal split at each step. For even $n$, we get equal splits. For odd $n$, we get adjacent integers (like 4 and 3, or 2 and 1), which are as balanced as possible.
 
 \section{Real Examples: Minnesota and Alabama}
 
@@ -319,16 +301,27 @@ Minnesota's 8 districts ($8 = 2^3$) demonstrate perfect recursive bisection thro
 \textbf{Round 1: 1$\rightarrow$2} & \textbf{Round 2: 2$\rightarrow$4} & \textbf{Round 3: 4$\rightarrow$8} \\
 \small{North-south split} & \small{Each region splits} & \small{Final 8 districts}
 \end{tabular}
-\caption{Three rounds of recursive bisection create Minnesota's 8 districts. Edge weights ensure each cut follows short, natural boundaries. Notice how each round doubles the number of regions: 1→2→4→8.}
+\caption{Three rounds of recursive bisection create Minnesota's 8 districts.}
 \end{figure}
 
-\textbf{Results}: Mean Polsby-Popper 0.468—beating both baseline (+62\%) and enacted maps (+63\%). This means our algorithm creates districts that are significantly more compact than either randomly-generated districts or the districts actually drawn by the Minnesota legislature. The improvement is substantial enough to be visually obvious.
+\vspace{0.3em}
+{\footnotesize
+\textbf{Minnesota (8 districts):}
+\begin{enumerate}[label=Round \arabic*:, noitemsep, topsep=0pt]
+\item $8 \rightarrow 4+4$
+\item $4 \rightarrow 2+2$ (×2)
+\item $2 \rightarrow 1+1$ (×4)
+\end{enumerate}
+Result: 8 equal districts.
+}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/metro_maps/minneapolis.png}
 \caption{Minneapolis-St. Paul metro area showing 4 core urban districts with compact boundaries. The algorithm naturally creates coherent urban districts while maintaining contiguity, demonstrating that algorithmic redistricting works well in dense metropolitan areas.}
 \end{figure}
+
+\textbf{Results}: Mean Polsby-Popper 0.468—beating both baseline (+62\%) and enacted maps (+63\%). This means our algorithm creates districts that are significantly more compact than either randomly-generated districts or the districts actually drawn by the Minnesota legislature. The improvement is substantial enough to be visually obvious.
 
 \subsection{Alabama: 7 Districts}
 
@@ -343,8 +336,19 @@ Alabama's 7 districts demonstrate adaptive splitting for odd numbers. Since 7 is
 \textbf{Round 1: 1$\rightarrow$2} & \textbf{Round 2: 2$\rightarrow$4} & \textbf{Round 3: 4$\rightarrow$7} \\
 \small{4:3 split} & \small{One district done} & \small{Final 7 districts}
 \end{tabular}
-\caption{Three rounds of recursive bisection create Alabama's 7 districts. The algorithm automatically handles odd district counts with unequal but balanced splits. The progression shows 1→2 (4:3 ratio), 2→4 (one region completes), 4→7 (final districts).}
+\caption{Three rounds of recursive bisection create Alabama's 7 districts.}
 \end{figure}
+
+\vspace{0.3em}
+{\footnotesize
+\textbf{Alabama (7 districts):}
+\begin{enumerate}[label=Round \arabic*:, noitemsep, topsep=0pt]
+\item $7 \rightarrow 4+3$
+\item $4 \rightarrow 2+2$, $3 \rightarrow 2+1$
+\item $2 \rightarrow 1+1$ (×3)
+\end{enumerate}
+Result: 7 balanced districts.
+}
 
 \textbf{Results}: Mean Polsby-Popper 0.369—beating both baseline (+50\%) and enacted maps (+24\%). The +24\% improvement over enacted districts is particularly notable, suggesting Alabama's actual 2020 districts may contain some gerrymandering. Our algorithm provides an objective baseline for comparison.
 
@@ -357,8 +361,6 @@ Minnesota and Alabama demonstrate that edge-weighted recursive bisection works w
 \item \textbf{Different geographies}: Minnesota's lakes vs Alabama's varied terrain, urban vs rural
 \item \textbf{Different political contexts}: The algorithm performs well regardless of the state's partisan lean
 \end{itemize}
-
-The key insight: By encoding real geographic information (boundary lengths) into the graph, METIS can make smart decisions that lead to compact districts. The same algorithm, with the same parameters, works across all 50 states without manual tuning or special cases. This consistency is crucial for fairness—there's no opportunity to tweak parameters differently for friendly vs unfriendly states.
 
 \section{National Results: All 50 States}
 
