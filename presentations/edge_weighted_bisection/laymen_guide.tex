@@ -260,9 +260,7 @@ Why is recursion natural here? Think about how you might manually draw districts
 \vspace{0.5em}
 \noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{
 {\small
-\textbf{Recursive Bisection Algorithm}
-
-\textbf{RBA}$(R, P, n)$: 
+\textbf{Recursive Bisection Algorithm} - \textbf{RBA}$(R, P, n)$: 
 
 \textbf{Input:} $R$: region, $P$: population, $n$: number of districts
 
@@ -299,25 +297,14 @@ Minnesota's 8 districts ($8 = 2^3$) demonstrate perfect recursive bisection thro
 \includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/minnesota_round_2.png} &
 \includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/minnesota_round_3.png} \\
 \textbf{Round 1: 1$\rightarrow$2} & \textbf{Round 2: 2$\rightarrow$4} & \textbf{Round 3: 4$\rightarrow$8} \\
-\small{North-south split} & \small{Each region splits} & \small{Final 8 districts}
+\small{$8 \rightarrow 4+4$} & \small{$4 \rightarrow 2+2$} & \small{$2 \rightarrow 1+1$}
 \end{tabular}
 \caption{Three rounds of recursive bisection create Minnesota's 8 districts.}
 \end{figure}
 
-\vspace{0.3em}
-{\footnotesize
-\textbf{Minnesota (8 districts):}
-\begin{enumerate}[label=Round \arabic*:, noitemsep, topsep=0pt]
-\item $8 \rightarrow 4+4$
-\item $4 \rightarrow 2+2$ (×2)
-\item $2 \rightarrow 1+1$ (×4)
-\end{enumerate}
-Result: 8 equal districts.
-}
-
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/metro_maps/minneapolis.png}
+\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/metro_maps/minneapolis.png}
 \caption{Minneapolis-St. Paul metro area showing 4 core urban districts with compact boundaries. The algorithm naturally creates coherent urban districts while maintaining contiguity, demonstrating that algorithmic redistricting works well in dense metropolitan areas.}
 \end{figure}
 
@@ -334,21 +321,10 @@ Alabama's 7 districts demonstrate adaptive splitting for odd numbers. Since 7 is
 \includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/alabama_round_2.png} &
 \includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/alabama_round_3.png} \\
 \textbf{Round 1: 1$\rightarrow$2} & \textbf{Round 2: 2$\rightarrow$4} & \textbf{Round 3: 4$\rightarrow$7} \\
-\small{4:3 split} & \small{One district done} & \small{Final 7 districts}
+\small{$7 \rightarrow 4+3$} & \small{$4 \rightarrow 2+2$, $3 \rightarrow 2+1$} & \small{$2 \rightarrow 1+1$}
 \end{tabular}
 \caption{Three rounds of recursive bisection create Alabama's 7 districts.}
 \end{figure}
-
-\vspace{0.3em}
-{\footnotesize
-\textbf{Alabama (7 districts):}
-\begin{enumerate}[label=Round \arabic*:, noitemsep, topsep=0pt]
-\item $7 \rightarrow 4+3$
-\item $4 \rightarrow 2+2$, $3 \rightarrow 2+1$
-\item $2 \rightarrow 1+1$ (×3)
-\end{enumerate}
-Result: 7 balanced districts.
-}
 
 \textbf{Results}: Mean Polsby-Popper 0.369—beating both baseline (+50\%) and enacted maps (+24\%). The +24\% improvement over enacted districts is particularly notable, suggesting Alabama's actual 2020 districts may contain some gerrymandering. Our algorithm provides an objective baseline for comparison.
 
