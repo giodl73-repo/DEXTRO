@@ -777,6 +777,7 @@ print(f"-> Next step")   # Works everywhere
 
 ## Recent Major Changes (Jan 2026)
 
+- **Algorithm Formalization & Figure Quality** (Jan 15, 2026): Formalized recursive bisection algorithm with RBA notation and mathematical set theory; increased all figure fonts for better readability; improved boundary label logic and removed redundant graph labels when both panels shown
 - **Create-Skill Meta-Skill** (Enhancement 19): Automated skill creation following established patterns, reducing creation time from 30-60 minutes to 5-10 minutes (80-90% time savings)
 - **Edit-Paper Skill** (Enhancement 20): Journal editor for academic papers - proofread, condense, copyedit, page targeting for submission
 - **Edit-Presentation Skill** (Enhancement 21): Conference editor for Beamer presentations - one idea per slide, time targeting, visual clarity

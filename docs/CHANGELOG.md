@@ -22,6 +22,17 @@ All notable changes to the Congressional Redistricting project.
 - Progress message standardization across analysis scripts
 
 ### Changed
+- **2026-01-15**: Algorithm formalization and figure quality improvements
+  - Formalized recursive bisection algorithm with RBA (Recursive Bisection Algorithm) notation in laymen's guide
+  - Added mathematical set notation for output: {(R₁, P₁, 1), ..., (Rₙ, Pₙ, n)} where P₁...Pₙ ≈ P/n
+  - Updated recursive step to use union operator: RBA(R₁, P₁, x) ∪ RBA(R₂, P₂, y)
+  - Changed Minnesota/Alabama examples from inline text to numbered lists (Round 1, 2, 3)
+  - Increased all figure font sizes by 1 point for better readability (titles: 14→15, labels: 9→10, region labels: 11→12)
+  - Fixed boundary_labels='none' logic to hide edge labels but still display compactness metrics
+  - Removed redundant "Region 1/2" labels from graph panel when both map and graph panels shown
+  - Moved water crossings explanation to footnote for improved text flow
+  - Updated `generate_all_figures.py` to use 2010 census data (that's what we have downloaded)
+  - Fixed `presentation.tex` to reference correct figure filename
 - **2026-01-15**: Reorganized enhancement tracking into individual files
   - Split `ENHANCEMENTS_2026.md` (2,931 lines) into 18 individual files
   - Created `docs/enhancements/` directory structure with `completed/`, `active/`, and `templates/` subdirectories
