@@ -260,13 +260,13 @@ Why is recursion natural here? Think about how you might manually draw districts
 \vspace{0.5em}
 \noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{
 {\small
-\textbf{Recursive Bisection Algorithm (RBA)}
+\textbf{Recursive Bisection Algorithm}
 
-\textbf{RBA}$(R, P, n)$:
+\textbf{RBA}$(R, P, n)$: 
 
 \textbf{Input:} $R$: region, $P$: population, $n$: number of districts
 
-\textbf{Output:} $\{(R_1, P_1, 1), \ldots, (R_n, P_n, n)\}$ where $P_1, \ldots, P_n \approx P/n$
+\textbf{Output:} $\{(R_1, P_1, 1), \ldots, (R_n, P_n, 1)\}$ where $R_1 \cup \cdots \cup R_n = R$, $P_1 + \cdots + P_n = P$, and $P_1, \ldots, P_n \approx P/n$
 
 \vspace{0.3em}
 \textbf{Algorithm:}
