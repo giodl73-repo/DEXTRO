@@ -5,7 +5,7 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{caption}
 \usepackage{float}
 \usepackage{tikz}
@@ -60,7 +60,7 @@ Here's an example of twelve tracts in Minneapolis, Minnesota. Our goal is to spl
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_map_none_before_edgeweighted.png}
+\includegraphics[width=0.6\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_map_none_before_edgeweighted.png}
 \caption{\textbf{Real Census Tracts (2010)}: Twelve actual tracts from Hennepin County, Minnesota.}
 \end{figure}
 
@@ -68,7 +68,7 @@ We introduce a methodology to convert this map into an abstract graph representa
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_before_edgeweighted.png}
+\includegraphics[width=0.85\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_before_edgeweighted.png}
 \caption{\textbf{Tracts to Graph}: Left: The same twelve tracts. Right: The abstract graph.}
 \end{figure}
 
@@ -140,7 +140,7 @@ Here's what that looks like geographically:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_after_unweighted.png}
+\includegraphics[width=0.85\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_after_unweighted.png}
 \caption{\textbf{Graph Partitioning}: METIS creates two separate graphs of equal population.}
 \end{figure}
 
@@ -157,7 +157,7 @@ In this example, region 1 is quite compact at 0.522 but region 2 is 0.246. The a
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_before_edgeweighted.png}
+\includegraphics[width=0.85\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_before_edgeweighted.png}
 \caption{\textbf{Edge Weights}: The boundary lengths (km) become edge weights in the graph.}
 \end{figure}
 
@@ -221,7 +221,7 @@ Notice the difference: tracts are assigned differently than the unweighted versi
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_after_edgeweighted.png}
+\includegraphics[width=0.85\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_after_edgeweighted.png}
 \caption{\textbf{Edge Weights in Action}: METIS is able to cut a shorter boundary using edge weights.}
 \end{figure}
 
@@ -245,7 +245,7 @@ This 2-line file specifies partition 0 gets 67\% and partition 1 gets 33\% (a 2:
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_67_33_both_all_after_edgeweighted.png}
+\includegraphics[width=0.85\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_67_33_both_all_after_edgeweighted.png}
 \caption{\textbf{Unequal Splits}: The same twelve Minneapolis tracts split 2:1 (67-33) instead of 50-50.}
 \end{figure}
 
@@ -260,24 +260,46 @@ Why is recursion natural here? Think about how you might manually draw districts
 \vspace{0.5em}
 \noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{
 {\small
-\textbf{Recursive Bisection Algorithm} - \textbf{RBA}$(R, P, n)$: 
+\textbf{Recursive Bisection Algorithm} - \textbf{RBA}$(\mathcal{R}, P, n)$:
 
-\textbf{Input:} $R$: region, $P$: population, $n$: number of districts
+\textbf{Input:} $\mathcal{R}$: region, $P$: population, $n$: number of districts
 
-\textbf{Output:} $\{(R_1, P_1, 1), \ldots, (R_n, P_n, 1)\}$ where $R_1 \cup \cdots \cup R_n = R$, $P_1 + \cdots + P_n = P$, and $P_1, \ldots, P_n \approx P/n$
+\textbf{Output:} $\{(\mathcal{R}_1, P_1, 1), \ldots, (\mathcal{R}_n, P_n, 1)\}$ where:
+\begin{itemize}[noitemsep,topsep=0pt]
+\item $\mathcal{R}_1 \cup \cdots \cup \mathcal{R}_n = \mathcal{R}$ (partition covers entire region)
+\item $\mathcal{R}_i \cap \mathcal{R}_j = \emptyset$ for $i \neq j$ (regions are disjoint)
+\item $P_1 + \cdots + P_n = P$ (population conservation)
+\item $P_1, \ldots, P_n \approx P/n$ (equal population per district)
+\end{itemize}
 
 \vspace{0.3em}
 \textbf{Algorithm:}
 \begin{enumerate}[noitemsep,topsep=0pt]
-\item \textbf{Base case:} If $n = 1$, return $\{(R, P, 1)\}$
+\item \textbf{Base case:} If $n = 1$, return $\{(\mathcal{R}, P, 1)\}$
 \item \textbf{Recursive case:} Calculate how to split $n$ into two parts:
 \begin{itemize}[noitemsep,topsep=0pt]
-\item If $n$ is \textbf{even}: $x = n/2, \, y = n/2$ (equal split)
-\item If $n$ is \textbf{odd}: $x = \lceil n/2 \rceil, \, y = \lfloor n/2 \rfloor$ (adjacent integers)
+\item If $n$ is \textbf{even}: $n_1 = n/2, \, n_2 = n/2$ (equal split)
+\item If $n$ is \textbf{odd}: $n_1 = \lceil n/2 \rceil, \, n_2 = \lfloor n/2 \rfloor$ (adjacent integers)
 \end{itemize}
-\item \textbf{Partition:} Split $R$ into regions $R_1$ and $R_2$ with populations $P_1$ and $P_2$ where $P_1 : P_2 \approx x : y$
-\item \textbf{Recurse:} Return $\text{RBA}(R_1, P_1, x) \cup \text{RBA}(R_2, P_2, y)$
+\item \textbf{Partition:} $(\mathcal{R}, P, n) \to (\mathcal{R}_1, P_1, n_1)$ and $(\mathcal{R}_2, P_2, n_2)$ where:
+\begin{itemize}[noitemsep,topsep=0pt]
+\item $\mathcal{R}_1 \cup \mathcal{R}_2 = \mathcal{R}$ (partition covers entire region)
+\item $\mathcal{R}_1 \cap \mathcal{R}_2 = \emptyset$ (regions are disjoint)
+\item $P_1 + P_2 = P$ (population conservation)
+\item $n_1 + n_2 = n$ (district conservation)
+\item $P_1/n_1 \approx P_2/n_2 \approx P/n$ (equal population per district)
+\end{itemize}
+\item \textbf{Recurse:} Return $\text{RBA}(\mathcal{R}_1, P_1, n_1) \cup \text{RBA}(\mathcal{R}_2, P_2, n_2)$
 \end{enumerate}
+
+\vspace{0.3em}
+\textbf{Compactness:} Polsby-Popper score $\text{PP}(\mathcal{R}) = \frac{4\pi \times \text{Area}(\mathcal{R})}{\text{Perimeter}(\mathcal{R})^2}$
+
+\textbf{Goals:}
+\begin{itemize}[noitemsep,topsep=0pt]
+\item Maximize average PP: $\max \frac{1}{n}\sum_{i=1}^{n} \text{PP}(\mathcal{R}_i)$
+\item Minimize PP standard deviation: $\min \sqrt{\frac{1}{n}\sum_{i=1}^{n} (\text{PP}(\mathcal{R}_i) - \overline{\text{PP}})^2}$
+\end{itemize}
 }
 }}
 
@@ -288,24 +310,24 @@ Let's see how this works on real states. Minnesota and Alabama provide an excell
 
 \subsection{Minnesota: 8 Districts}
 
-Minnesota's 8 districts ($8 = 2^3$) demonstrate perfect recursive bisection through three equal-split rounds. Since 8 is a power of 2, each round splits regions exactly in half, creating a balanced binary tree structure. Watch how the algorithm progressively refines the map: first a rough north-south divide, then finer subdivisions within each region, finally individual districts.
+Minnesota's 8 districts ($8 = 2^3$) demonstrate perfect recursive bisection through three equal-split rounds.
 
 \begin{figure}[H]
 \centering
 \begin{tabular}{@{}c@{\hspace{0.5cm}}c@{\hspace{0.5cm}}c@{}}
-\includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/minnesota_round_1.png} &
-\includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/minnesota_round_2.png} &
-\includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/minnesota_round_3.png} \\
+\includegraphics[width=0.28\textwidth]{../../../outputs/figures/round_progression/minnesota_round_1.png} &
+\includegraphics[width=0.28\textwidth]{../../../outputs/figures/round_progression/minnesota_round_2.png} &
+\includegraphics[width=0.28\textwidth]{../../../outputs/figures/round_progression/minnesota_round_3.png} \\
 \textbf{Round 1: 1$\rightarrow$2} & \textbf{Round 2: 2$\rightarrow$4} & \textbf{Round 3: 4$\rightarrow$8} \\
 \small{$8 \rightarrow 4+4$} & \small{$4 \rightarrow 2+2$} & \small{$2 \rightarrow 1+1$}
 \end{tabular}
-\caption{Three rounds of recursive bisection create Minnesota's 8 districts.}
+\caption{Three rounds create Minnesota's 8 districts.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{../../outputs/presentations/edge_weighted_bisection/metro_maps/minneapolis.png}
-\caption{Minneapolis-St. Paul metro area showing 4 core urban districts with compact boundaries. The algorithm naturally creates coherent urban districts while maintaining contiguity, demonstrating that algorithmic redistricting works well in dense metropolitan areas.}
+\includegraphics[width=0.5\textwidth]{../../../outputs/presentations/edge_weighted_bisection/metro_maps/minneapolis.png}
+\caption{Minneapolis metro area: 4 urban districts with compact boundaries.}
 \end{figure}
 
 \textbf{Results}: Mean Polsby-Popper 0.468—beating both baseline (+62\%) and enacted maps (+63\%). This means our algorithm creates districts that are significantly more compact than either randomly-generated districts or the districts actually drawn by the Minnesota legislature. The improvement is substantial enough to be visually obvious.
@@ -317,13 +339,13 @@ Alabama's 7 districts demonstrate adaptive splitting for odd numbers. Since 7 is
 \begin{figure}[H]
 \centering
 \begin{tabular}{@{}c@{\hspace{0.5cm}}c@{\hspace{0.5cm}}c@{}}
-\includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/alabama_round_1.png} &
-\includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/alabama_round_2.png} &
-\includegraphics[width=0.3\textwidth]{../../outputs/figures/round_progression/alabama_round_3.png} \\
+\includegraphics[width=0.28\textwidth]{../../../outputs/figures/round_progression/alabama_round_1.png} &
+\includegraphics[width=0.28\textwidth]{../../../outputs/figures/round_progression/alabama_round_2.png} &
+\includegraphics[width=0.28\textwidth]{../../../outputs/figures/round_progression/alabama_round_3.png} \\
 \textbf{Round 1: 1$\rightarrow$2} & \textbf{Round 2: 2$\rightarrow$4} & \textbf{Round 3: 4$\rightarrow$7} \\
 \small{$7 \rightarrow 4+3$} & \small{$4 \rightarrow 2+2$, $3 \rightarrow 2+1$} & \small{$2 \rightarrow 1+1$}
 \end{tabular}
-\caption{Three rounds of recursive bisection create Alabama's 7 districts.}
+\caption{Three rounds create Alabama's 7 districts.}
 \end{figure}
 
 \textbf{Results}: Mean Polsby-Popper 0.369—beating both baseline (+50\%) and enacted maps (+24\%). The +24\% improvement over enacted districts is particularly notable, suggesting Alabama's actual 2020 districts may contain some gerrymandering. Our algorithm provides an objective baseline for comparison.
@@ -346,7 +368,7 @@ The 56\% improvement over unweighted baseline demonstrates the value of edge wei
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{../../outputs/presentations/edge_weighted_bisection/maps/us_all_districts.png}
+\includegraphics[width=0.85\textwidth]{../../../outputs/presentations/edge_weighted_bisection/maps/us_all_districts.png}
 \caption{\textbf{All 435 Congressional Districts (2020)}: The complete national map shows our algorithmically-generated districts for all 50 states. Each district is colored uniquely, with Alaska and Hawaii shown as insets. The algorithm automatically created compact districts across diverse geographic contexts—from dense urban areas to sprawling rural regions. No manual intervention was required—the same code ran on all states.}
 \end{figure}
 
@@ -434,7 +456,7 @@ This is the example from the main text. Equal population split (1:1 ratio).
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_after_edgeweighted.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_after_edgeweighted.png}
 \end{figure}
 
 \subsection{Houston, TX: 60-40 Split (3:2)}
@@ -443,7 +465,7 @@ A 3:2 ratio shows moderate population difference. The algorithm finds compact bo
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/appendix_examples/houston_60_40.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/artifacts/guides/edge_weighted_bisection/appendix_examples/houston_60_40.png}
 \end{figure}
 
 \clearpage
@@ -454,7 +476,7 @@ A 3:4 ratio demonstrates a slight majority. Notice how METIS adjusts the partiti
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/appendix_examples/los_angeles_43_57.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/artifacts/guides/edge_weighted_bisection/appendix_examples/los_angeles_43_57.png}
 \end{figure}
 
 \subsection{Atlanta, GA: 45-55 Split (5:6)}
@@ -463,7 +485,7 @@ A 5:6 ratio is close to equal but not quite. This shows the algorithm's precisio
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/appendix_examples/atlanta_45_55.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/artifacts/guides/edge_weighted_bisection/appendix_examples/atlanta_45_55.png}
 \end{figure}
 
 \clearpage
@@ -474,7 +496,7 @@ A 6:7 ratio is nearly balanced. Even with this close split, the algorithm finds 
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/appendix_examples/phoenix_46_54.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/artifacts/guides/edge_weighted_bisection/appendix_examples/phoenix_46_54.png}
 \end{figure}
 
 \subsection{Miami, FL: 47-53 Split (8:9)}
@@ -483,7 +505,7 @@ An 8:9 ratio is very close to equal. This demonstrates the algorithm's ability t
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/presentations/edge_weighted_bisection/appendix_examples/miami_47_53.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/artifacts/guides/edge_weighted_bisection/appendix_examples/miami_47_53.png}
 \end{figure}
 
 \clearpage

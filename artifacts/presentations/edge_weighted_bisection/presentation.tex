@@ -57,7 +57,7 @@
 \end{itemize}
 
 \column{0.5\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/schematic/example_gerrymander.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/schematic/example_gerrymander.png}
 \begin{center}
 \small{\textit{Example inspired by Illinois 4th District}}
 \end{center}
@@ -150,7 +150,7 @@ A \textbf{graph} is a way to represent connections:
 \end{itemize}
 
 \column{0.5\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/schematic/tract_to_graph.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/schematic/tract_to_graph.png}
 \end{columns}
 \end{frame}
 
@@ -341,7 +341,7 @@ A \textbf{graph} is a way to represent connections:
 \begin{frame}{Real Geography: Minneapolis Census Tracts}
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_map_none_before_edgeweighted.png}
+\includegraphics[width=0.7\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_map_none_before_edgeweighted.png}
 \end{figure}
 
 \vspace{-0.5em}
@@ -355,7 +355,7 @@ Twelve census tracts from the Minneapolis area. Notice the irregular shapes—th
 \begin{frame}{From Real Geography to Abstract Graph}
 \begin{figure}
 \centering
-\includegraphics[width=0.98\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_before_edgeweighted.png}
+\includegraphics[width=0.98\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_before_edgeweighted.png}
 \end{figure}
 
 \vspace{-0.5em}
@@ -370,7 +370,7 @@ Twelve census tracts from the Minneapolis area. Notice the irregular shapes—th
 \begin{frame}{Unweighted Partition: Why It Fails}
 \begin{figure}
 \centering
-\includegraphics[width=0.98\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_after_unweighted.png}
+\includegraphics[width=0.98\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_none_after_unweighted.png}
 \end{figure}
 
 \vspace{-0.5em}
@@ -384,7 +384,7 @@ Traditional approach treats all edges equally. Result: Cuts 23.6 km of boundarie
 \begin{frame}{Edge Weights: Show All Boundaries}
 \begin{figure}
 \centering
-\includegraphics[width=0.98\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_before_edgeweighted.png}
+\includegraphics[width=0.98\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_before_edgeweighted.png}
 \end{figure}
 
 \vspace{-0.5em}
@@ -395,7 +395,7 @@ Now we see all edge weights (boundary lengths in km). Longer boundaries should b
 \begin{frame}{Edge-Weighted Partition: Much Better!}
 \begin{figure}
 \centering
-\includegraphics[width=0.98\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_after_edgeweighted.png}
+\includegraphics[width=0.98\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_50_50_both_all_after_edgeweighted.png}
 \end{figure}
 
 \vspace{-0.5em}
@@ -409,7 +409,7 @@ With edge weights: Only 18.0 km cut—24\% less than unweighted! Higher compactn
 \begin{frame}{Works for Unequal Splits Too}
 \begin{figure}
 \centering
-\includegraphics[width=0.98\textwidth]{../../outputs/figures/real_tracts_examples/minneapolis_67_33_both_all_after_edgeweighted.png}
+\includegraphics[width=0.98\textwidth]{../../../outputs/figures/real_tracts_examples/minneapolis_67_33_both_all_after_edgeweighted.png}
 \end{figure}
 
 \vspace{-0.5em}
@@ -423,7 +423,7 @@ Same 12 tracts, but split 2:1 (67-33) instead of 50-50. Edge weights still produ
 \begin{frame}{The Cut Operation (Schematic)}
 \begin{figure}
 \centering
-\includegraphics[width=0.75\textwidth]{../../outputs/figures/schematic/graph_with_cut.png}
+\includegraphics[width=0.75\textwidth]{../../../outputs/figures/schematic/graph_with_cut.png}
 \end{figure}
 
 \textbf{What happened:} METIS cut 3 edges (red dashed lines) to create 2 balanced regions while minimizing total boundary length.
@@ -432,7 +432,7 @@ Same 12 tracts, but split 2:1 (67-33) instead of 50-50. Edge weights still produ
 \begin{frame}{Before and After Partitioning}
 \begin{figure}
 \centering
-\includegraphics[width=0.95\textwidth]{../../outputs/figures/schematic/before_after_cut.png}
+\includegraphics[width=0.95\textwidth]{../../../outputs/figures/schematic/before_after_cut.png}
 \end{figure}
 
 \textbf{Result:} Two balanced districts separated by cutting only the shortest boundaries.
@@ -470,15 +470,15 @@ gpmetis graph.txt 2
 \begin{frame}{Minnesota: 8 Districts (Perfect Power of 2)}
 \begin{columns}
 \column{0.33\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/round_progression/minnesota_round_1.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/round_progression/minnesota_round_1.png}
 \begin{center}\small{Round 1: 2 regions}\end{center}
 
 \column{0.33\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/round_progression/minnesota_round_2.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/round_progression/minnesota_round_2.png}
 \begin{center}\small{Round 2: 4 regions}\end{center}
 
 \column{0.33\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/round_progression/minnesota_round_3.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/round_progression/minnesota_round_3.png}
 \begin{center}\small{Round 3: 8 districts}\end{center}
 \end{columns}
 
@@ -489,15 +489,15 @@ gpmetis graph.txt 2
 \begin{frame}{Alabama: 7 Districts (Not a Power of 2)}
 \begin{columns}
 \column{0.33\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/round_progression/alabama_round_1.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/round_progression/alabama_round_1.png}
 \begin{center}\small{Round 1: 2 regions\\(4 vs 3)}\end{center}
 
 \column{0.33\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/round_progression/alabama_round_2.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/round_progression/alabama_round_2.png}
 \begin{center}\small{Round 2: 4 regions}\end{center}
 
 \column{0.33\textwidth}
-\includegraphics[width=\textwidth]{../../outputs/figures/round_progression/alabama_round_3.png}
+\includegraphics[width=\textwidth]{../../../outputs/figures/round_progression/alabama_round_3.png}
 \begin{center}\small{Round 3: 7 districts}\end{center}
 \end{columns}
 
@@ -545,7 +545,7 @@ Enacted 2020 Map & 0.297 & +21\% \\
 \begin{frame}{National Map: All 435 Districts}
 \begin{figure}
 \centering
-\includegraphics[width=0.95\textwidth]{../../outputs/presentations/edge_weighted_bisection/maps/us_all_districts.png}
+\includegraphics[width=0.95\textwidth]{../../../outputs/presentations/edge_weighted_bisection/maps/us_all_districts.png}
 \end{figure}
 
 \vspace{-0.5em}

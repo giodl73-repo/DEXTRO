@@ -237,7 +237,7 @@ def validate_partition_ratio(sample_tracts, membership, target_weights, toleranc
 def run_metis_partition(sample_tracts, adjacency, edge_weights, config):
     """Run METIS to partition tracts."""
     import sys
-    sys.path.insert(0, str(Path('../../src').resolve()))
+    sys.path.insert(0, str(Path('../../../src').resolve()))
     from apportionment.partition.metis_wrapper import partition_graph
 
     n_tracts = len(sample_tracts)
@@ -579,9 +579,9 @@ def generate_example(config, args, output_dir):
     state_name = config['state_name']
     county_fips = config['county_fips']
 
-    # File paths
-    tracts_file = Path(f'../../data/geography/tiger_{args.year}_tracts/tl_{args.year}_{state_fips}_tract{year_suffix}/tl_{args.year}_{state_fips}_tract{year_suffix}.shp')
-    population_file = Path(f'../../data/processed/census_{args.year}/{state_name}_tracts_{args.year}_population.csv')
+    # File paths (go up 3 levels from artifacts/guides/edge_weighted_bisection/ to project root)
+    tracts_file = Path(f'../../../data/geography/tiger_{args.year}_tracts/tl_{args.year}_{state_fips}_tract{year_suffix}/tl_{args.year}_{state_fips}_tract{year_suffix}.shp')
+    population_file = Path(f'../../../data/processed/census_{args.year}/{state_name}_tracts_{args.year}_population.csv')
 
     geoid_field = f'GEOID{year_suffix}'
     county_field = f'COUNTYFP{year_suffix}'
@@ -729,7 +729,7 @@ def main():
     args = parser.parse_args()
 
     # Output directory
-    output_dir = Path(f'../../outputs/presentations/edge_weighted_bisection/appendix_examples')
+    output_dir = Path(f'../../../outputs/artifacts/guides/edge_weighted_bisection/appendix_examples')
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print("=" * 70)

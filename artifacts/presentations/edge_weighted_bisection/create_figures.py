@@ -23,7 +23,7 @@ parser.add_argument('--version', type=str, default='v1',
 args = parser.parse_args()
 
 # Create figures directory in outputs
-figures_dir = Path('../../outputs/presentations/edge_weighted_bisection/figures')
+figures_dir = Path('../../../../outputs/artifacts/presentations/edge_weighted_bisection/figures')
 figures_dir.mkdir(parents=True, exist_ok=True)
 
 print("=" * 70)
@@ -42,7 +42,7 @@ print("-" * 70)
 import shutil
 
 # Check if pipeline outputs exist
-pipeline_output_dir = Path(f'../../outputs/us_{args.year}_{args.version}')
+pipeline_output_dir = Path(f'../../../outputs/us_{args.year}_{args.version}')
 if not pipeline_output_dir.exists():
     print(f"[WARNING] Pipeline outputs not found at: {pipeline_output_dir}")
     print("          Round progression figures will not be available.")
@@ -51,21 +51,21 @@ if not pipeline_output_dir.exists():
 else:
     # Minnesota round maps (3 rounds -> 8 districts)
     minnesota_rounds = [
-        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_01.png',
+        (f'../../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_01.png',
          'minnesota_round_1_2_regions.png'),
-        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_02.png',
+        (f'../../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_02.png',
          'minnesota_round_2_4_regions.png'),
-        (f'../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_03.png',
+        (f'../../../outputs/us_{args.year}_{args.version}/states/minnesota/maps/rounds/round_03.png',
          'minnesota_round_3_8_regions.png'),
     ]
 
     # Alabama round maps (3 rounds -> 7 districts)
     alabama_rounds = [
-        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_01.png',
+        (f'../../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_01.png',
          'alabama_round_1_2_regions.png'),
-        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_02.png',
+        (f'../../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_02.png',
          'alabama_round_2_4_regions.png'),
-        (f'../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_03.png',
+        (f'../../../outputs/us_{args.year}_{args.version}/states/alabama/maps/rounds/round_03.png',
          'alabama_round_3_7_regions.png'),
     ]
 
@@ -652,8 +652,8 @@ def generate_real_tracts_example(config, args, figures_dir):
     state_name = config['state_name']
 
     # File paths
-    tracts_file = Path(f'../../data/geography/tiger_{args.year}_tracts/tl_{args.year}_{state_fips}_tract{year_suffix}/tl_{args.year}_{state_fips}_tract{year_suffix}.shp')
-    population_file = Path(f'../../data/processed/census_{args.year}/{state_name}_tracts_{args.year}_population.csv')
+    tracts_file = Path(f'../../../data/geography/tiger_{args.year}_tracts/tl_{args.year}_{state_fips}_tract{year_suffix}/tl_{args.year}_{state_fips}_tract{year_suffix}.shp')
+    population_file = Path(f'../../../data/processed/census_{args.year}/{state_name}_tracts_{args.year}_population.csv')
 
     geoid_field = f'GEOID{year_suffix}'
     county_field = f'COUNTYFP{year_suffix}'
@@ -679,8 +679,8 @@ print("Creating real census tracts to graph transformation with METIS cut...")
 
 # Try to load real census tract data (Minnesota, FIPS 27) using specified year
 year_suffix = str(args.year)[-2:]  # '10' from 2010, '20' from 2020
-tracts_file = Path(f'../../data/geography/tiger_{args.year}_tracts/tl_{args.year}_27_tract{year_suffix}/tl_{args.year}_27_tract{year_suffix}.shp')
-population_file = Path(f'../../data/processed/census_{args.year}/mn_tracts_{args.year}_population.csv')
+tracts_file = Path(f'../../../data/geography/tiger_{args.year}_tracts/tl_{args.year}_27_tract{year_suffix}/tl_{args.year}_27_tract{year_suffix}.shp')
+population_file = Path(f'../../../data/processed/census_{args.year}/mn_tracts_{args.year}_population.csv')
 geoid_field = f'GEOID{year_suffix}'  # GEOID10 for 2010, GEOID20 for 2020
 county_field = f'COUNTYFP{year_suffix}'  # COUNTYFP10 for 2010, COUNTYFP20 for 2020
 
@@ -782,7 +782,7 @@ else:
             try:
                 # Add parent directory to path to import from src
                 import sys
-                sys.path.insert(0, str(Path('../../src').resolve()))
+                sys.path.insert(0, str(Path('../../../src').resolve()))
                 from apportionment.partition.metis_wrapper import partition_graph
 
                 # Prepare data for METIS

@@ -81,9 +81,9 @@ echo ======================================================================
 echo All Papers Compiled Successfully!
 echo ======================================================================
 echo Output files:
-echo   - outputs\papers\01_recursive_bisection\recursive_bisection.pdf
-echo   - outputs\papers\02_edge_weighted_bisection\edge_weighted_bisection.pdf
-echo   - outputs\papers\03_combined_recursive_bisection\recursive_bisection_with_edge_weighted_cuts.pdf
+echo   - outputs\artifacts\papers\01_recursive_bisection\recursive_bisection.pdf
+echo   - outputs\artifacts\papers\02_edge_weighted_bisection\edge_weighted_bisection.pdf
+echo   - outputs\artifacts\papers\03_combined_recursive_bisection\recursive_bisection_with_edge_weighted_cuts.pdf
 echo ======================================================================
 echo.
 

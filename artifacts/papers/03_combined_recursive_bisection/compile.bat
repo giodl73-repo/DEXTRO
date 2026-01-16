@@ -33,7 +33,7 @@ goto parse_args
 :end_parse
 
 REM Create output directory
-set OUTPUT_DIR=..\..\outputs\papers\03_combined_recursive_bisection
+set OUTPUT_DIR=..\..\..\outputs\artifacts\papers\03_combined_recursive_bisection
 
 REM Handle --reset flag
 if %RESET_FLAG%==1 (
