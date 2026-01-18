@@ -95,11 +95,11 @@ run -v v1
   # All years (2-4h)
 run -y 2020 -v v1
   # Single year (~1h)
-run -y 2020 -v v1 -s CA TX
+run -y 2020 -v v1 -st CA TX
   # Specific states
 run -v v1 -r
   # Fresh run
-run -v v1 --skip-states
+run -v v1 -s nation
   # National only (fast)
 run -w 12 -v v1
   # Custom workers
@@ -109,7 +109,7 @@ run -w 12 -v v1
 \begin{Verbatim}[fontsize=\small,frame=single]
 runtest -y 2020 -v test
   # Test run (outputs/dev/)
-runtest -y 2020 -v t -s VT
+runtest -y 2020 -v t -st VT
   # Single state test
 run -p -v preview
   # Dry run
@@ -194,7 +194,8 @@ cancel  # Kill all Python
 \texttt{-h} & \texttt{--help} & - & - & Show all options \\
 \texttt{-y} & \texttt{--year} & 2020/2010/2000/all & all & Census year(s) \\
 \texttt{-v} & \texttt{--version} & string & v1 & Version ID \\
-\texttt{-s} & \texttt{--states} & codes & all & States (CA TX NY) \\
+\texttt{-s} & \texttt{--stages} & data/states/nation & all & Pipeline stages \\
+\texttt{-st} & \texttt{--states} & codes & all & States (CA TX NY) \\
 \texttt{-w} & \texttt{--workers} & 1-24 & 12 & Parallel workers \\
 \texttt{-r} & \texttt{--reset} & flag & - & Fresh run \\
 \texttt{-p} & \texttt{--print-only} & flag & - & Dry run \\
@@ -211,12 +212,18 @@ cancel  # Kill all Python
 \textbf{Long-only Flags:}
 \begin{itemize}\itemsep0pt
 \item \texttt{--dpi N} - Quality (def: 150)
-\item \texttt{--skip-states} - National only
-\item \texttt{--states-only} - Skip national
+\item \texttt{--minimum-boundary-length N} - Filter adjacencies (def: 10m)
 \item \texttt{--skip-political} - No politics
 \item \texttt{--skip-demographic} - No demos
 \item \texttt{--reprocess} - Redo all states
 \item \texttt{--experiment-name} - Experiment name
+\end{itemize}
+
+\textbf{Stage Examples:}
+\begin{itemize}\itemsep0pt
+\item \texttt{-s data} - Data only
+\item \texttt{-s states nation} - Skip data
+\item \texttt{-s nation} - Post-processing only
 \end{itemize}
 
 \textbf{Tests:}
