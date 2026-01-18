@@ -46,6 +46,7 @@
 \textbf{Pipeline:}
 \begin{Verbatim}[fontsize=\normalsize,frame=none]
 run
+runtest
 cancel
 validate
 \end{Verbatim}
@@ -90,25 +91,38 @@ checkconn
 
 \textbf{Common:}
 \begin{Verbatim}[fontsize=\small,frame=single]
-run --version v1
+run -v v1
   # All years (2-4h)
-run --year 2020 --version v1
+run -y 2020 -v v1
   # Single year (~1h)
-run --version v1 --reset
+run -y 2020 -v v1 -s CA TX
+  # Specific states
+run -v v1 -r
   # Fresh run
-run --version v1 --skip-states
+run -v v1 --skip-states
   # National only (fast)
-run --workers 12 --version v1
+run -w 12 -v v1
   # Custom workers
+\end{Verbatim}
+
+\textbf{Test/Debug:}
+\begin{Verbatim}[fontsize=\small,frame=single]
+runtest -y 2020 -v test
+  # Test run (outputs/dev/)
+runtest -y 2020 -v t -s VT
+  # Single state test
+run -p -v preview
+  # Dry run
+run -v v1 -d
+  # Debug mode
 \end{Verbatim}
 
 \textbf{Experimental:}
 \begin{Verbatim}[fontsize=\small,frame=single]
-run --partition-mode unweighted
-  --version v1
-run --run-type experiment
+run -pm unweighted -v v1
+run -rt experiment
   --experiment-name test123
-  --version v1
+  -v v1
 \end{Verbatim}
 
 \section*{Tests}
@@ -168,32 +182,41 @@ cancel  # Kill all Python
 
 \section*{Pipeline Flags}
 
-\textbf{Basic:}
-\begin{itemize}\itemsep0pt
-\item \texttt{--version v1} - Version ID
-\item \texttt{--year \{2020|2010|2000|all\}}
-\item \texttt{--workers N} - Parallel (def: 12)
-\item \texttt{--dpi N} - Quality (def: 150)
-\item \texttt{--reset} - Delete outputs
-\item \texttt{--print-only} - Dry run
-\end{itemize}
+\textbf{Short Flags (all have long equivalents):}
 
-\textbf{Scope:}
+\vspace{2pt}
+
+\begin{small}
+\begin{tabular}{|l|l|p{3cm}|l|p{3cm}|}
+\hline
+\textbf{Short} & \textbf{Long} & \textbf{Values} & \textbf{Default} & \textbf{Description} \\
+\hline
+\texttt{-h} & \texttt{--help} & - & - & Show all options \\
+\texttt{-y} & \texttt{--year} & 2020/2010/2000/all & all & Census year(s) \\
+\texttt{-v} & \texttt{--version} & string & v1 & Version ID \\
+\texttt{-s} & \texttt{--states} & codes & all & States (CA TX NY) \\
+\texttt{-w} & \texttt{--workers} & 1-24 & 12 & Parallel workers \\
+\texttt{-r} & \texttt{--reset} & flag & - & Fresh run \\
+\texttt{-p} & \texttt{--print-only} & flag & - & Dry run \\
+\texttt{-d} & \texttt{--debug} & flag & - & Debug mode \\
+\texttt{-ey} & \texttt{--election-year} & 2020/2016 & 2020 & Election data \\
+\texttt{-pm} & \texttt{--partition-mode} & edge/unweighted & edge & METIS mode \\
+\texttt{-rt} & \texttt{--run-type} & prod/test/exp & prod & Output type \\
+\hline
+\end{tabular}
+\end{small}
+
+\vspace{4pt}
+
+\textbf{Long-only Flags:}
 \begin{itemize}\itemsep0pt
+\item \texttt{--dpi N} - Quality (def: 150)
 \item \texttt{--skip-states} - National only
 \item \texttt{--states-only} - Skip national
 \item \texttt{--skip-political} - No politics
 \item \texttt{--skip-demographic} - No demos
 \item \texttt{--reprocess} - Redo all states
-\end{itemize}
-
-\textbf{Experiments:}
-\begin{itemize}\itemsep0pt
-\item \texttt{--partition-mode \{edge-weighted|unweighted\}}
-\item \texttt{--run-type \{production|experiment|test\}}
-\item \texttt{--experiment-name NAME}
-\item \texttt{--election-year \{2020|2016\}}
-\item \texttt{--debug} - Debug mode
+\item \texttt{--experiment-name} - Experiment name
 \end{itemize}
 
 \textbf{Tests:}
