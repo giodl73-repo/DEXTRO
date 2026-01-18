@@ -1,0 +1,223 @@
+\documentclass[10pt,landscape]{article}
+\usepackage[margin=0.35in]{geometry}
+\usepackage{multicol}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
+\usepackage[compact]{titlesec}
+\usepackage{tcolorbox}
+
+% Colors
+\definecolor{sectioncolor}{RGB}{0,102,204}
+\definecolor{highlightbg}{RGB}{230,240,255}
+\definecolor{commandcolor}{RGB}{0,51,102}
+
+% Section formatting
+\titleformat{\section}{\large\bfseries\color{sectioncolor}}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+
+% No page numbers
+\pagestyle{empty}
+
+% Tighter spacing
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\setlength{\columnseprule}{0.4pt}
+\setlength{\multicolsep}{6pt}
+\setlength{\columnsep}{14pt}
+
+\begin{document}
+
+\begin{center}
+\textbf{\LARGE Congressional Redistricting - Command Reference}\\
+\vspace{4pt}
+\large Run \texttt{setup\_env.bat} first to enable shortcuts
+\end{center}
+
+\vspace{6pt}
+
+\begin{tcolorbox}[colback=highlightbg,colframe=sectioncolor,boxrule=1pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt]
+\textbf{\large Quick Project Shortcuts}
+
+\vspace{4pt}
+
+\begin{multicols}{4}
+\raggedright
+
+\textbf{Pipeline:}
+\begin{Verbatim}[fontsize=\normalsize,frame=none]
+run
+cancel
+validate
+\end{Verbatim}
+
+\columnbreak
+
+\textbf{Testing:}
+\begin{Verbatim}[fontsize=\normalsize,frame=none]
+test
+unittest
+inttest
+e2etest
+\end{Verbatim}
+
+\columnbreak
+
+\textbf{Dashboard:}
+\begin{Verbatim}[fontsize=\normalsize,frame=none]
+dash
+gendash
+master
+\end{Verbatim}
+
+\columnbreak
+
+\textbf{Data:}
+\begin{Verbatim}[fontsize=\normalsize,frame=none]
+dlcensus
+buildadj
+checkconn
+\end{Verbatim}
+
+\end{multicols}
+\end{tcolorbox}
+
+\vspace{4pt}
+
+\begin{multicols}{3}
+\raggedright
+
+\section*{Pipeline}
+
+\textbf{Common:}
+\begin{Verbatim}[fontsize=\small,frame=single]
+run --version v1
+  # All years (2-4h)
+run --year 2020 --version v1
+  # Single year (~1h)
+run --version v1 --reset
+  # Fresh run
+run --version v1 --skip-states
+  # National only (fast)
+run --workers 12 --version v1
+  # Custom workers
+\end{Verbatim}
+
+\textbf{Experimental:}
+\begin{Verbatim}[fontsize=\small,frame=single]
+run --partition-mode unweighted
+  --version v1
+run --run-type experiment
+  --experiment-name test123
+  --version v1
+\end{Verbatim}
+
+\section*{Tests}
+
+\begin{Verbatim}[fontsize=\small,frame=single]
+test               # All (18s)
+unittest           # Unit tests
+inttest            # Integration
+e2etest            # End-to-end
+pytest tests/ -x   # Stop first
+pytest tests/ --cov # Coverage
+\end{Verbatim}
+
+\columnbreak
+
+\section*{Dashboard}
+
+\begin{Verbatim}[fontsize=\small,frame=single]
+dash --year 2020 --version v1
+gendash --year 2020 --version v1
+master
+start outputs/index.html
+\end{Verbatim}
+
+\section*{Data Management}
+
+\begin{Verbatim}[fontsize=\small,frame=single]
+dlcensus --year 2020
+buildadj --year 2020
+checkconn --year 2020
+validate --year 2020
+  --version v1
+\end{Verbatim}
+
+\section*{Emergency}
+
+\begin{Verbatim}[fontsize=\small,frame=single]
+cancel  # Kill all Python
+\end{Verbatim}
+
+\section*{Claude Skills}
+
+\begin{Verbatim}[fontsize=\small,frame=single]
+/run-redistricting
+/run-tests
+/debug-tests
+/debug-pipeline
+/enhancement-plan
+/enhancement-implement
+/create-state-map
+/create-national-map
+/generate-dashboard
+/data-validate
+\end{Verbatim}
+
+\columnbreak
+
+\section*{Pipeline Flags}
+
+\textbf{Basic:}
+\begin{itemize}\itemsep0pt
+\item \texttt{--version v1} - Version ID
+\item \texttt{--year \{2020|2010|2000|all\}}
+\item \texttt{--workers N} - Parallel (def: 12)
+\item \texttt{--dpi N} - Quality (def: 150)
+\item \texttt{--reset} - Delete outputs
+\item \texttt{--print-only} - Dry run
+\end{itemize}
+
+\textbf{Scope:}
+\begin{itemize}\itemsep0pt
+\item \texttt{--skip-states} - National only
+\item \texttt{--states-only} - Skip national
+\item \texttt{--skip-political} - No politics
+\item \texttt{--skip-demographic} - No demos
+\item \texttt{--reprocess} - Redo all states
+\end{itemize}
+
+\textbf{Experiments:}
+\begin{itemize}\itemsep0pt
+\item \texttt{--partition-mode \{edge-weighted|unweighted\}}
+\item \texttt{--run-type \{production|experiment|test\}}
+\item \texttt{--experiment-name NAME}
+\item \texttt{--election-year \{2020|2016\}}
+\item \texttt{--debug} - Debug mode
+\end{itemize}
+
+\textbf{Tests:}
+\begin{itemize}\itemsep0pt
+\item \texttt{-v} - Verbose
+\item \texttt{-s} - Show prints
+\item \texttt{-x} - Stop first fail
+\item \texttt{--cov} - Coverage
+\item \texttt{-k PATTERN} - Filter
+\end{itemize}
+
+\section*{Performance}
+
+\textbf{DPI:} 100 (dev) | \textbf{150 (default)} | 200 | 300 (print)
+
+\textbf{Times:}
+\begin{itemize}\itemsep0pt
+\item Multi-year: \textbf{2-4h}
+\item Single year: \textbf{~1h}
+\item Small state: \textbf{30s-2min}
+\item Large state: \textbf{3-5min}
+\item Tests: \textbf{18s}
+\end{itemize}
+
+\end{multicols}
+
+\end{document}
