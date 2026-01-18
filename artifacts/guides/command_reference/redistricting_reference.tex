@@ -30,7 +30,9 @@
 \begin{center}
 \textbf{\LARGE Congressional Redistricting - Command Reference}\\
 \vspace{4pt}
-\large Run \texttt{setup\_env.bat} first to enable shortcuts
+\large Run \texttt{setup\_env.bat} first to enable shortcuts\\
+\vspace{2pt}
+\normalsize Updated: 2026-01-18
 \end{center}
 
 \vspace{6pt}
@@ -74,9 +76,11 @@ master
 
 \textbf{Data:}
 \begin{Verbatim}[fontsize=\normalsize,frame=none]
+dldemo
+dlelect
+dlplaces
 dlcensus
 buildadj
-checkconn
 \end{Verbatim}
 
 \end{multicols}
@@ -149,12 +153,32 @@ start outputs/index.html
 
 \section*{Data Management}
 
+\textbf{Downloads:}
 \begin{Verbatim}[fontsize=\small,frame=single]
-dlcensus --year 2020
-buildadj --year 2020
-checkconn --year 2020
-validate --year 2020
-  --version v1
+dldemo -y 2020
+  # Demographics (2000/2010/2020)
+dldemo -y 2010 -o custom/path
+  # Custom output dir
+dlelect -y 2020
+  # Election data (2020 only)
+dlplaces -y 2020
+  # Places/cities
+dlcensus -y 2020
+  # Census tracts (2020)
+dltiger2010
+  # TIGER/Line 2010
+dltiger2000
+  # TIGER/Line 2000
+\end{Verbatim}
+
+\textbf{Processing:}
+\begin{Verbatim}[fontsize=\small,frame=single]
+buildadj -y 2020
+  # Build adjacency graphs
+checkconn -y 2020
+  # Check connectivity
+validate -y 2020 -v v1
+  # Validate outputs
 \end{Verbatim}
 
 \section*{Emergency}
@@ -224,6 +248,12 @@ cancel  # Kill all Python
 \item \texttt{-s data} - Data only
 \item \texttt{-s states nation} - Skip data
 \item \texttt{-s nation} - Post-processing only
+\end{itemize}
+
+\textbf{Data Download Flags:}
+\begin{itemize}\itemsep0pt
+\item \texttt{-y, --year} - Census year (2000/2010/2020)
+\item \texttt{-o, --output-dir} - Output directory
 \end{itemize}
 
 \textbf{Tests:}
