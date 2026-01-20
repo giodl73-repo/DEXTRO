@@ -76,10 +76,10 @@ master
 
 \textbf{Data:}
 \begin{Verbatim}[fontsize=\normalsize,frame=none]
+dl
+dlcheck
+dlval
 dldemo
-dlelect
-dlplaces
-dlcensus
 buildadj
 \end{Verbatim}
 
@@ -153,22 +153,44 @@ start outputs/index.html
 
 \section*{Data Management}
 
-\textbf{Downloads:}
+\textbf{Download Orchestrator (NEW - Parallel):}
+\begin{Verbatim}[fontsize=\small,frame=single]
+dl
+  # Check all data (default: all stages,
+  # all years, check-only)
+dl --stages redistricting --year 2020
+  # Download redistricting data
+dl --stages redistricting demographics \
+   --year all --workers 12
+  # Multi-year parallel (4-8x faster)
+dl --stages metros enacted_districts \
+   --year 2020
+  # Download metros and CDs
+dl --stages redistricting --year 2020 \
+   --force
+  # Force redownload
+dlval --year all --create-markers
+  # Mark complete data
+\end{Verbatim}
+
+\textbf{Available Stages:}
+\begin{itemize}\itemsep0pt
+\item \texttt{redistricting} - Census tracts/blocks + pop
+\item \texttt{demographics} - Age, race, sex data
+\item \texttt{elections} - Presidential results
+\item \texttt{places} - City/town boundaries
+\item \texttt{metros} - CBSA/Metro boundaries
+\item \texttt{enacted\_districts} - Baseline CDs
+\end{itemize}
+
+\textbf{Legacy Downloads (Individual):}
 \begin{Verbatim}[fontsize=\small,frame=single]
 dldemo -y 2020
-  # Demographics (2000/2010/2020)
-dldemo -y 2010 -o custom/path
-  # Custom output dir
+  # Demographics only
 dlelect -y 2020
-  # Election data (2020 only)
+  # Elections only
 dlplaces -y 2020
-  # Places/cities
-dlcensus -y 2020
-  # Census tracts (2020)
-dltiger2010
-  # TIGER/Line 2010
-dltiger2000
-  # TIGER/Line 2000
+  # Places only
 \end{Verbatim}
 
 \textbf{Processing:}
@@ -250,10 +272,23 @@ cancel  # Kill all Python
 \item \texttt{-s nation} - Post-processing only
 \end{itemize}
 
-\textbf{Data Download Flags:}
+\textbf{Download Orchestrator Flags:}
 \begin{itemize}\itemsep0pt
-\item \texttt{-y, --year} - Census year (2000/2010/2020)
-\item \texttt{-o, --output-dir} - Output directory
+\item \texttt{--stages} - Stages to download (redistricting, demographics, elections, places, metros, enacted\_districts)
+\item \texttt{--year} - Census year (2000/2010/2020/all)
+\item \texttt{--workers N} - Parallel workers (def: 4)
+\item \texttt{--states} - Specific states (e.g., CA TX NY)
+\item \texttt{--check-only} - Check cache, no download
+\item \texttt{--force} - Force redownload
+\item \texttt{--output-dir} - Output directory
+\end{itemize}
+
+\textbf{Validate Downloads:}
+\begin{itemize}\itemsep0pt
+\item \texttt{--year} - Year to validate (2000/2010/2020/all)
+\item \texttt{--stages} - Stages to check
+\item \texttt{--create-markers} - Create completion markers
+\item \texttt{--check-only} - Check without modifying
 \end{itemize}
 
 \textbf{Tests:}
